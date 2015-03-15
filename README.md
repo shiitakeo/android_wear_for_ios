@@ -34,6 +34,7 @@ Getting Started
 
 apk install
 ---------
+get apk from [release page](https://github.com/shiitakeo/android_wear_for_ios/releases/download/0.1/wear-release.apk).
 install the apk using ADB.
 
 ```sh
