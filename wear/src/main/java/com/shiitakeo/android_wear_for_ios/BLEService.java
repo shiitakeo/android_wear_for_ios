@@ -1,5 +1,6 @@
 package com.shiitakeo.android_wear_for_ios;
 
+import android.app.PendingIntent;
 import android.app.Service;
 import android.app.Notification;
 import android.bluetooth.BluetoothAdapter;
@@ -58,22 +59,28 @@ public class BLEService extends Service{
 
     private Boolean is_subscribed_characteristics = false;
 
-    private Notification notification;
-
     private Vibrator vib;
     private long pattern[] = {200, 100, 200, 100};
 
 
     private BluetoothLeScanner le_scanner;
 
-    NotificationManagerCompat notificationManager;
-    int notification_id = 0;
+    private NotificationManagerCompat notificationManager;
+    private int notification_id = 0;
 
-    PowerManager.WakeLock wake_lock;
+    private PowerManager.WakeLock wake_lock;
 
-    PacketProcessor packet_processor;
+    private PacketProcessor packet_processor;
 
-    IconImageManager icon_image_manager;
+    private IconImageManager icon_image_manager;
+
+    private BroadcastReceiver message_receiver = new MessageReceiver();
+
+    private byte[] uid = new byte[4];
+
+    // intent action
+    String action_positive = "com.shiitakeo.perform_notification_action_positive";
+    String action_negative = "com.shiitakeo.perform_notification_action_negative";
 
 
     @Override
@@ -89,6 +96,11 @@ public class BLEService extends Service{
     public void onStart(Intent intent, int startID) {
         Log.d("Service", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
+        IntentFilter intent_filter = new IntentFilter();
+        intent_filter.addAction(action_positive);
+        intent_filter.addAction(action_negative);
+        registerReceiver(message_receiver, intent_filter);
+
         if(le_scanner != null) {
             Log.d(TAG_LOG, "status: ble reset");
             le_scanner.stopScan(scan_callback);
@@ -100,7 +112,6 @@ public class BLEService extends Service{
         }
 
         vib = (Vibrator)getSystemService(VIBRATOR_SERVICE);
-//        notificationManager = NotificationManagerCompat.from(MainActivity.this);
         notificationManager = NotificationManagerCompat.from(getApplicationContext());
         packet_processor = new PacketProcessor();
         icon_image_manager = new IconImageManager();
@@ -114,16 +125,13 @@ public class BLEService extends Service{
         // Checks if Bluetooth is supported on the device.
         if (bluetooth_adapter == null) {
             Log.d(TAG_LOG, "ble adapter is null");
-//            finish();
             return;
         }
 
         Log.d(TAG_LOG, "start BLE scan");
-//        bluetooth_adapter.startLeScan(mLeScanCallback);
         le_scanner = bluetooth_adapter.getBluetoothLeScanner();
         ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
         le_scanner.startScan(scan_fillters(), settings, scan_callback);
-//        le_scanner.startScan(scan_callback);
     }
 
     @Override
@@ -275,7 +283,6 @@ public class BLEService extends Service{
                     }
                 }else {
                     //execute success animation
-//                    Intent intent = new Intent(MainActivity.this, ConfirmationActivity.class);
                     Intent intent = new Intent(getApplicationContext(), ConfirmationActivity.class);
                     intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.SUCCESS_ANIMATION);
                     intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "success");
@@ -285,7 +292,6 @@ public class BLEService extends Service{
             }else if(status == BluetoothGatt.GATT_WRITE_NOT_PERMITTED) {
                 Log.d(TAG_LOG, "status: write not permitted");
                 //execute not permission animation
-//                Intent intent = new Intent(MainActivity.this, ConfirmationActivity.class);
                 Intent intent = new Intent(getApplicationContext(), ConfirmationActivity.class);
                 intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION);
                 intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "please re-authorization paring");
@@ -373,6 +379,10 @@ public class BLEService extends Service{
                             Log.d(TAG_LOG, "get notify");
                             // notification value setting.
                             //current, hard coding
+                            uid[0] = data[4];
+                            uid[1] = data[5];
+                            uid[2] = data[6];
+                            uid[3] = data[7];
                             byte[] get_notification_attribute = {
                                     (byte)0x00,
                                     //UID
@@ -409,14 +419,52 @@ public class BLEService extends Service{
         }
     };
 
-    public class MessageReceiver extends BroadcastReceiver {
-
+    public class MessageReceiver extends BroadcastReceiver{
+        private static final String TAG_LOG = "BLE_wear";
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG_LOG, "onReceive");
-            if (!wake_lock.isHeld()) {
-                Log.d(TAG_LOG, "acquire()");
-                wake_lock.acquire();
+            String action = intent.getAction();
+
+            if (action.equals(action_positive) | action.equals(action_negative)){
+                Log.d(TAG_LOG, "get action: " + action);
+
+                // set action id
+                byte _action_id = 0x00;
+                if(action.equals(action_negative)) {
+                    _action_id = (byte) 0x01;
+                }
+
+                try {
+                    Log.d(TAG_LOG, "get notify");
+                    // perform notification action value setting.
+                    byte[] get_notification_attribute = {
+                            (byte)0x02,
+                            //UID
+                            uid[0], uid[1], uid[2], uid[3],
+                            //action
+                            _action_id
+                    };
+
+                    BluetoothGattService service = bluetooth_gatt.getService(UUID.fromString(service_ancs));
+                    if (service == null) {
+                        Log.d(TAG_LOG, "cant find service @ BR");
+                    } else {
+                        Log.d(TAG_LOG, "find service @ BR");
+                        BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(characteristics_control_point));
+                        if (characteristic == null) {
+                            Log.d(TAG_LOG, "cant find chara @ BR");
+                        } else {
+                            Log.d(TAG_LOG, "find chara @ BR");
+                            characteristic.setValue(get_notification_attribute);
+                            bluetooth_gatt.writeCharacteristic(characteristic);
+                        }
+                    }
+                }catch(ArrayIndexOutOfBoundsException e){
+                    Log.d(TAG_LOG, "error");
+                    e.printStackTrace();
+                }
+                Log.d(TAG_LOG, "onReceive");
             }
         }
     }
