@@ -340,8 +340,8 @@ public class BLEService extends Service{
                             .setSmallIcon(app_logo)
                             .setLargeIcon(large_icon)
                             .setGroup(packet_processor.get_ds_app_id())
-                            .addAction(android.R.drawable.ic_input_add, "positive", _positive_action)
-                            .addAction(android.R.drawable.ic_input_add, "negative", _negative_action)
+                            .addAction(R.drawable.ic_accept, "Accept", _positive_action)
+                            .addAction(R.drawable.ic_decline, "Decline", _negative_action)
                             .build();
                     notificationManager.notify(notification_id, notification);
                     notification_id++;
