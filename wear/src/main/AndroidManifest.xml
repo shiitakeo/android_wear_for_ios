@@ -24,6 +24,9 @@
             </intent-filter>
         </activity>
         <service android:name=".BLEService" />
+
+        <receiver android:name=".MessageReceiver" />
+
         <activity android:name="android.support.wearable.activity.ConfirmationActivity" />
     </application>
 
