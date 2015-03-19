@@ -325,25 +325,35 @@ public class BLEService extends Service{
                     Bitmap large_icon = BitmapFactory.decodeResource(getResources(), app_logo);
                     Log.d(TAG_LOG, "in title: notification");
 
-                    Notification card1 = new NotificationCompat.Builder(getApplicationContext())
+                    //create perform notification action pending_intent
+                    Intent _intent_positive = new Intent();
+                    _intent_positive.setAction(action_positive);
+                    PendingIntent _positive_action = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent_positive, PendingIntent.FLAG_CANCEL_CURRENT);
+
+                    Intent _intent_negative = new Intent();
+                    _intent_negative.setAction(action_negative);
+                    PendingIntent _negative_action = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent_negative, PendingIntent.FLAG_CANCEL_CURRENT);
+
+                    Notification notification = new NotificationCompat.Builder(getApplicationContext())
                             .setContentTitle(packet_processor.get_ds_title())
                             .setContentText(packet_processor.get_ds_message())
                             .setSmallIcon(app_logo)
                             .setLargeIcon(large_icon)
                             .setGroup(packet_processor.get_ds_app_id())
+                            .addAction(android.R.drawable.ic_input_add, "positive", _positive_action)
+                            .addAction(android.R.drawable.ic_input_add, "negative", _negative_action)
                             .build();
-                    notificationManager.notify(notification_id, card1);
+                    notificationManager.notify(notification_id, notification);
                     notification_id++;
                     vib.vibrate(pattern, -1);
 
-                    //awake from sleep, when get notification.
-                    // cant't work on API 21
+                    // awake screen.
                     PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
                     wake_lock = powerManager.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "MyWakelockTag");
-                    IntentFilter messageFilter = new IntentFilter("message-forwarded-from-data-layer");
-                    MessageReceiver messageReceiver = new MessageReceiver();
-//                    LocalBroadcastManager.getInstance(MainActivity.this).registerReceiver(messageReceiver, messageFilter);
-                    LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(messageReceiver, messageFilter);
+                    if (!wake_lock.isHeld()) {
+                        Log.d(TAG_LOG, "acquire()");
+                        wake_lock.acquire();
+                    }
                 }
             }
 
