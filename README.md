@@ -15,6 +15,7 @@ update
 1. add some icons(include whatsapp)
 2. screen awake from sleep when get notification
 3. control calling(you can select accept or decline from your wear)
+4. delete notificatin on iphone from wear.
 ```
 
 Tested Devices
