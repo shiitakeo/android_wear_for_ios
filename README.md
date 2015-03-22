@@ -18,7 +18,7 @@ so, you check other models, please let me know.
 |moto360|△ (can get notification, but connection is unstable. maybe moto360's BLE stack is something difflenet.)|
 |Gear Live| - (unconfirmed)|
 |SmartWatch3| - (unconfirmed)|
-|ZenWatch| - (unconfirmed)|
+|ZenWatch| ◯ (12 hours long time test passed.)|
 
 Getting Started
 ---------------
