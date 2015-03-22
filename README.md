@@ -8,6 +8,14 @@ I developed this app inspired by @MohammadAG's video.
 
 Latest version
 --------------
+- v0.2.1
+update
+
+```
+1. auto screen turn off (after 1sec from getting notification.)
+2. swipe to remove notification on iphone.
+```
+
 - v0.2
 
 update
