@@ -81,6 +81,7 @@ public class BLEService extends Service{
     // intent action
     String action_positive = "com.shiitakeo.perform_notification_action_positive";
     String action_negative = "com.shiitakeo.perform_notification_action_negative";
+    String action_delete = "com.shiitakeo.delete";
 
     private static final long screen_time_out = 1000;
 
@@ -101,6 +102,7 @@ public class BLEService extends Service{
         IntentFilter intent_filter = new IntentFilter();
         intent_filter.addAction(action_positive);
         intent_filter.addAction(action_negative);
+        intent_filter.addAction(action_delete);
         registerReceiver(message_receiver, intent_filter);
 
         if(le_scanner != null) {
@@ -336,14 +338,20 @@ public class BLEService extends Service{
                     _intent_negative.setAction(action_negative);
                     PendingIntent _negative_action = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent_negative, PendingIntent.FLAG_CANCEL_CURRENT);
 
+                    Intent _intent_delete = new Intent();
+                    _intent_delete.setAction(action_delete);
+                    PendingIntent _delete_action = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent_delete, PendingIntent.FLAG_CANCEL_CURRENT);
+
                     Notification notification = new NotificationCompat.Builder(getApplicationContext())
                             .setContentTitle(packet_processor.get_ds_title())
                             .setContentText(packet_processor.get_ds_message())
                             .setSmallIcon(app_logo)
-                            .setLargeIcon(large_icon)
+                            // fix large_icon size. current size occurred out of memory error.
+//                            .setLargeIcon(large_icon)
                             .setGroup(packet_processor.get_ds_app_id())
                             .addAction(R.drawable.ic_accept, "Accept", _positive_action)
                             .addAction(R.drawable.ic_decline, "Decline", _negative_action)
+                            .setDeleteIntent(_delete_action)
                             .build();
                     notificationManager.notify(notification_id, notification);
                     notification_id++;
@@ -438,12 +446,14 @@ public class BLEService extends Service{
             Log.d(TAG_LOG, "onReceive");
             String action = intent.getAction();
 
-            if (action.equals(action_positive) | action.equals(action_negative)){
+            // perform notification action: immediately
+            // delete intent: after 7~8sec.
+            if (action.equals(action_positive) | action.equals(action_negative) | action.equals(action_delete)){
                 Log.d(TAG_LOG, "get action: " + action);
 
                 // set action id
                 byte _action_id = 0x00;
-                if(action.equals(action_negative)) {
+                if(action.equals(action_negative) | action.equals(action_delete)) {
                     _action_id = (byte) 0x01;
                 }
 
