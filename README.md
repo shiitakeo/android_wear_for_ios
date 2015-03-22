@@ -6,6 +6,18 @@ This app get notification using ANCS from iphone.
 so, don't need jail break iphone and rooted wear.  
 I developed this app inspired by @MohammadAG's video.
 
+Latest version
+--------------
+- v0.2
+
+update
+```
+1. add some icons(include whatsapp)
+2. screen awake from sleep when get notification
+3. control calling(you can select accept or decline from your wear)
+4. delete notificatin on iphone from wear.
+```
+
 Tested Devices
 --------------
 I have G watch R only.  
@@ -34,7 +46,7 @@ Getting Started
 
 apk install
 ---------
-get apk from [release page](https://github.com/shiitakeo/android_wear_for_ios/releases/download/0.1/wear-release.apk).
+get apk from [release page](https://github.com/shiitakeo/android_wear_for_ios/releases).
 install the apk using ADB.
 
 ```sh
