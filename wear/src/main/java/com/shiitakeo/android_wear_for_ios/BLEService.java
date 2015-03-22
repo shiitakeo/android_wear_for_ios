@@ -82,6 +82,8 @@ public class BLEService extends Service{
     String action_positive = "com.shiitakeo.perform_notification_action_positive";
     String action_negative = "com.shiitakeo.perform_notification_action_negative";
 
+    private static final long screen_time_out = 1000;
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -352,7 +354,7 @@ public class BLEService extends Service{
                     wake_lock = powerManager.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "MyWakelockTag");
                     if (!wake_lock.isHeld()) {
                         Log.d(TAG_LOG, "acquire()");
-                        wake_lock.acquire();
+                        wake_lock.acquire(screen_time_out);
                     }
                 }
             }
