@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">_wear_for_ios</string>
+    <string name="app_name">wear_for_ios</string>
     <string name="hello_round">Hello Round World!</string>
     <string name="hello_square">Hello Square World!</string>
 </resources>

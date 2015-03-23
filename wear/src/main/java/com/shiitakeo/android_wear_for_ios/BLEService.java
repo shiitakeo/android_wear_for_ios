@@ -346,8 +346,7 @@ public class BLEService extends Service{
                             .setContentTitle(packet_processor.get_ds_title())
                             .setContentText(packet_processor.get_ds_message())
                             .setSmallIcon(app_logo)
-                            // fix large_icon size. current size occurred out of memory error.
-//                            .setLargeIcon(large_icon)
+                            .setLargeIcon(large_icon)
                             .setGroup(packet_processor.get_ds_app_id())
                             .addAction(R.drawable.ic_accept, "Accept", _positive_action)
                             .addAction(R.drawable.ic_decline, "Decline", _negative_action)
