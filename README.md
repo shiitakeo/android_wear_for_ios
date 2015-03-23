@@ -35,7 +35,7 @@ so, you check other models, please let me know.
 |:--    |:--     |
 |G Watch R| ◯ (12 hours long time test passed.)|
 |G Watch  | ◯ (12 hours long time test passed.)|
-|moto360|△ (can get notification, but connection is unstable. maybe moto360's BLE stack is something difflenet.)|
+|moto360|△ (can get notification, but connection is unstable. 4-5hours after connection is lost.please ambient mode turn on.(maybe moto360's BLE stack is something difflenet.)|
 |Gear Live|◯ (12 hours long time test passed.)|
 |SmartWatch3| - (unconfirmed)|
 |ZenWatch| ◯ (12 hours long time test passed.)|
