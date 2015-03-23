@@ -34,9 +34,9 @@ so, you check other models, please let me know.
 | model | result |
 |:--    |:--     |
 |G Watch R| ◯ (12 hours long time test passed.)|
-|G Watch  | ◯(maybe long time test passed.)|
+|G Watch  | ◯ (12 hours long time test passed.)|
 |moto360|△ (can get notification, but connection is unstable. maybe moto360's BLE stack is something difflenet.)|
-|Gear Live| - (unconfirmed)|
+|Gear Live|◯ (12 hours long time test passed.)|
 |SmartWatch3| - (unconfirmed)|
 |ZenWatch| ◯ (12 hours long time test passed.)|
 
