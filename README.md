@@ -8,7 +8,7 @@ I developed this app inspired by @MohammadAG's video.
 
 Latest version
 --------------
-- v0.3
+- v0.3(same as play store version '15/03/30)
 update
 
 ```
@@ -16,7 +16,7 @@ update
   use 4.4<= android handheld.
   
 2. implement prototype of auto-reconnect
-[check video on youtube]()
+[check tutorial video on youtube](https://youtu.be/aPZ7UM6_aLw)
 ```
 
 - v0.2.2
