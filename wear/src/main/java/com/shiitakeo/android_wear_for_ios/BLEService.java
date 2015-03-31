@@ -1,5 +1,6 @@
 package com.shiitakeo.android_wear_for_ios;
 
+import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.app.Notification;
@@ -23,6 +24,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.ParcelUuid;
 import android.os.PowerManager;
@@ -38,9 +40,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Created by kusabuka on 15/03/15.
+ * Created by shiitakeo on 15/03/15.
  */
 public class BLEService extends Service{
+    private int api_level = Build.VERSION.SDK_INT;
+
     private BluetoothAdapter bluetooth_adapter;
     private BluetoothGatt bluetooth_gatt;
     private static Boolean is_connect = false;
@@ -84,6 +88,10 @@ public class BLEService extends Service{
     String action_delete = "com.shiitakeo.delete";
 
     private static final long screen_time_out = 1000;
+    private Boolean is_reconnect = false;
+    private int skip_count = 0;
+    BLEScanCallback scan_callback = new BLEScanCallback();
+
 
 
     @Override
@@ -105,20 +113,28 @@ public class BLEService extends Service{
         intent_filter.addAction(action_delete);
         registerReceiver(message_receiver, intent_filter);
 
-        if(le_scanner != null) {
-            Log.d(TAG_LOG, "status: ble reset");
-            le_scanner.stopScan(scan_callback);
-            bluetooth_gatt.close();
-            bluetooth_gatt = null;
-            bluetooth_adapter = null;
-            is_connect = false;
-            is_subscribed_characteristics = false;
-        }
-
         vib = (Vibrator)getSystemService(VIBRATOR_SERVICE);
         notificationManager = NotificationManagerCompat.from(getApplicationContext());
         packet_processor = new PacketProcessor();
         icon_image_manager = new IconImageManager();
+
+        if(bluetooth_gatt != null) {
+            bluetooth_gatt.disconnect();
+            bluetooth_gatt.close();
+            bluetooth_gatt = null;
+        }
+        if(bluetooth_adapter != null) {
+            bluetooth_adapter = null;
+        }
+        if(api_level >= 21) {
+            if (le_scanner != null) {
+                Log.d(TAG_LOG, "status: ble reset");
+                stop_le_scanner();
+            }
+        }
+        is_connect = false;
+        is_subscribed_characteristics = false;
+
 
         // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
         // BluetoothAdapter through BluetoothManager.
@@ -132,16 +148,35 @@ public class BLEService extends Service{
             return;
         }
 
-        Log.d(TAG_LOG, "start BLE scan");
+        if(api_level >= 21) {
+            Log.d(TAG_LOG, "start BLE scan @ lescan");
+            start_le_scanner();
+        }else {
+            Log.d(TAG_LOG, "start BLE scan @ BluetoothAdapter");
+            bluetooth_adapter.startLeScan(le_scan_callback);
+        }
+    }
+
+    @TargetApi(21)
+    private void start_le_scanner(){
         le_scanner = bluetooth_adapter.getBluetoothLeScanner();
         ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
         le_scanner.startScan(scan_fillters(), settings, scan_callback);
     }
 
+    @TargetApi(21)
+    private void stop_le_scanner(){
+        le_scanner.stopScan(scan_callback);
+    }
+
     @Override
     public void onDestroy() {
         Log.d(TAG_LOG, "~~~~~~~~ service onDestroy");
-        le_scanner.stopScan(scan_callback);
+        if(api_level >= 21) {
+            stop_le_scanner();
+        }else {
+            bluetooth_adapter.stopLeScan(le_scan_callback);
+        }
         is_connect =false;
         is_subscribed_characteristics = false;
 
@@ -156,6 +191,11 @@ public class BLEService extends Service{
 
     private List<ScanFilter> scan_fillters() {
         // can't find ancs service
+        return create_scan_filter();
+    }
+
+    @TargetApi(21)
+    private List<ScanFilter> create_scan_filter(){
 //        ScanFilter filter = new ScanFilter.Builder().setServiceUuid(ParcelUuid.fromString(service_ancs)).build();
         ScanFilter filter = new ScanFilter.Builder().setServiceUuid(ParcelUuid.fromString(service_blank)).build();
         List<ScanFilter> list = new ArrayList<ScanFilter>(1);
@@ -164,24 +204,37 @@ public class BLEService extends Service{
     }
 
 
-    ScanCallback scan_callback = new ScanCallback() {
+//    ScanCallback scan_callback = new ScanCallback() {
 
+    @TargetApi(21)
+    private class BLEScanCallback extends ScanCallback {
         @Override
         public void onScanResult(int callbackType, android.bluetooth.le.ScanResult result) {
             Log.i(TAG_LOG, "scan result" + result.toString());
             BluetoothDevice device = result.getDevice();
-            if(!is_connect) {
+            if (!is_connect) {
                 Log.d(TAG_LOG, "is connect");
                 if (device != null) {
                     Log.d(TAG_LOG, "device ");
-                    if (device.getName() != null) {
+                    if (!is_reconnect && device.getName() != null) {
                         Log.d(TAG_LOG, "getname ");
                         is_connect = true;
                         bluetooth_gatt = result.getDevice().connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
+                    } else if (is_reconnect && skip_count > 5 && device.getName() != null) {
+                        Log.d(TAG_LOG, "reconnect:: ");
+                        is_connect = true;
+                        is_reconnect = false;
+                        bluetooth_gatt = result.getDevice().connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
+                    } else {
+                        Log.d(TAG_LOG, "skip:: ");
+                        skip_count++;
                     }
                 }
             }
-        };
+        }
+
+        ;
+
         @Override
         public void onBatchScanResults(List<ScanResult> results) {
             Log.i(TAG_LOG, "batchscan result" + results.toString());
@@ -192,7 +245,35 @@ public class BLEService extends Service{
             super.onScanFailed(errorCode);
             Log.d(TAG_LOG, "onScanFailed" + errorCode);
         }
+    }
+//    };
 
+    private BluetoothAdapter.LeScanCallback le_scan_callback = new BluetoothAdapter.LeScanCallback(){
+        @Override
+        public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+            Log.i(TAG_LOG, "onLeScan");
+            if(!is_connect) {
+                Log.d(TAG_LOG, "is connect");
+                if (device != null) {
+                    Log.d(TAG_LOG, "device ");
+                    if (!is_reconnect && device.getName() != null) {
+                        Log.d(TAG_LOG, "getname ");
+                        is_connect = true;
+                        bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
+                    }else if(is_reconnect && skip_count > 5 && device.getName() != null){
+                        Log.d(TAG_LOG, "reconnect:: ");
+                        is_connect = true;
+                        is_reconnect = false;
+                        bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
+                    }else {
+                        Log.d(TAG_LOG, "skip:: ");
+                        skip_count++;
+                    }
+                }
+            }
+
+
+        }
     };
 
     private final BluetoothGattCallback bluetooth_gattCallback = new BluetoothGattCallback() {
@@ -205,11 +286,45 @@ public class BLEService extends Service{
                 gatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.d(TAG_LOG, "onDisconnect: ");
-                bluetooth_gatt.close();
-                bluetooth_gatt = null;
+
+                if(api_level >= 21) {
+                    if (le_scanner != null) {
+                        Log.d(TAG_LOG, "status: ble reset");
+                        stop_le_scanner();
+                    }
+                }
+                if(bluetooth_gatt != null) {
+                    bluetooth_gatt.disconnect();
+                    bluetooth_gatt.close();
+                    bluetooth_gatt = null;
+                }
+                if(bluetooth_adapter != null) {
+                    bluetooth_adapter = null;
+                }
                 is_connect = false;
                 is_subscribed_characteristics = false;
+                skip_count = 0;
 
+
+                // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
+                // BluetoothAdapter through BluetoothManager.
+                final BluetoothManager bluetoothManager =
+                        (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+                bluetooth_adapter = bluetoothManager.getAdapter();
+
+                // Checks if Bluetooth is supported on the device.
+                if (bluetooth_adapter == null) {
+                    Log.d(TAG_LOG, "ble adapter is null");
+                    return;
+                }
+
+                is_reconnect = true;
+                Log.d(TAG_LOG, "start BLE scan");
+                if(api_level >= 21) {
+                    start_le_scanner();
+                }else {
+                    bluetooth_adapter.startLeScan(le_scan_callback);
+                }
 
                 //execute success animation
                 Intent intent = new Intent(getApplicationContext(), ConfirmationActivity.class);
@@ -248,7 +363,11 @@ public class BLEService extends Service{
                             Log.d(TAG_LOG, " ** find desc :: " + descriptor.getUuid());
                             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                             bluetooth_gatt.writeDescriptor(descriptor);
-                            le_scanner.stopScan(scan_callback);
+                            if(api_level >= 21) {
+                                stop_le_scanner();
+                            }else {
+                                bluetooth_adapter.stopLeScan(le_scan_callback);
+                            }
                         }
                     }
                 }
@@ -301,6 +420,7 @@ public class BLEService extends Service{
                 intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "please re-authorization paring");
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
+
             }
         }
 
