@@ -8,6 +8,26 @@ I developed this app inspired by @MohammadAG's video.
 
 Latest version
 --------------
+- v0.3
+update
+
+```
+1. install from android handheld. don't need adb.   
+  use 4.4<= android handheld.
+  
+2. implement prototype of auto-reconnect
+[check video on youtube]()
+```
+
+- v0.2.2
+update
+
+```
+1. install from android handheld. don't need adb.   
+  use 5.0<= android handheld.
+```
+
+
 - v0.2.1
 update
 
@@ -37,14 +57,14 @@ so, you check other models, please let me know.
 |G Watch  | ◯ (12 hours long time test passed.)|
 |moto360|△ (can get notification, but connection is unstable. 4-5hours after connection is lost.please ambient mode turn on.(maybe moto360's BLE stack is something difflenet.)|
 |Gear Live|◯ (12 hours long time test passed.)|
-|SmartWatch3| - (unconfirmed)|
+|SmartWatch3| ◯ (6 hours test passed.)|
 |ZenWatch| ◯ (12 hours long time test passed.)|
 
 Getting Started
 ---------------
 [tutorial video @ Youtube.](https://www.youtube.com/watch?v=cIYe6ExIjrQ)
 
-1. Install apk to your Android wear.
+1. Install apk to your Android wear(playstore or github).
 2. Install "Light Blue" app to your iPhone.
 3. Create virtual peripheral from "Blink" template.  
 4. Launch the app on your Android wear.
@@ -54,7 +74,21 @@ Getting Started
 
 apk install
 ---------
-get apk from [release page](https://github.com/shiitakeo/android_wear_for_ios/releases).
+### 1. install from play store
+you can install from paly store.  
+need 4.4<= android handheld.
+
+- [free version](https://play.google.com/store/apps/details?id=com.shiitakeo.android_wear_for_ios)
+- [donation version](https://play.google.com/store/apps/details?id=com.shiitakeo.android_wear_for_ios.donation)
+
+### 2. install github's apk with android handheld(adb over Bluetooth).
+get apk from [release page](https://github.com/shiitakeo/android_wear_for_ios/releases).  
+use mobile-release.apk.  
+install the apk using ADB over Bluetooth. need 4.4<= android handheld.
+
+### 3.install github's apk without android handheld(usb adb).
+get apk from [release page](https://github.com/shiitakeo/android_wear_for_ios/releases).  
+use wearble-release.apk.  
 install the apk using ADB.
 
 ```sh
