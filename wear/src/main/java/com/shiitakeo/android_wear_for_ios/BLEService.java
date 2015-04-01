@@ -43,7 +43,8 @@ import java.util.UUID;
  * Created by shiitakeo on 15/03/15.
  */
 public class BLEService extends Service{
-    private int api_level = Build.VERSION.SDK_INT;
+//    private int api_level = Build.VERSION.SDK_INT;
+    private int api_level = 20;
 
     private BluetoothAdapter bluetooth_adapter;
     private BluetoothGatt bluetooth_gatt;
@@ -91,7 +92,10 @@ public class BLEService extends Service{
     private Boolean is_reconnect = false;
     private int skip_count = 0;
     BLEScanCallback scan_callback = new BLEScanCallback();
+    String iphone_uuid;
 
+    long start_time;
+    Boolean is_time = false;
 
 
     @Override
@@ -134,6 +138,9 @@ public class BLEService extends Service{
         }
         is_connect = false;
         is_subscribed_characteristics = false;
+        iphone_uuid = "";
+        start_time = 0;
+        is_time = false;
 
 
         // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
@@ -160,8 +167,10 @@ public class BLEService extends Service{
     @TargetApi(21)
     private void start_le_scanner(){
         le_scanner = bluetooth_adapter.getBluetoothLeScanner();
-        ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
-        le_scanner.startScan(scan_fillters(), settings, scan_callback);
+
+//        ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
+//        le_scanner.startScan(scan_fillters(), settings, scan_callback);
+        le_scanner.startScan(scan_callback);
     }
 
     @TargetApi(21)
@@ -179,6 +188,8 @@ public class BLEService extends Service{
         }
         is_connect =false;
         is_subscribed_characteristics = false;
+        iphone_uuid = "";
+        is_time = false;
 
         if(null != bluetooth_gatt){
             bluetooth_gatt.disconnect();
@@ -210,21 +221,39 @@ public class BLEService extends Service{
     private class BLEScanCallback extends ScanCallback {
         @Override
         public void onScanResult(int callbackType, android.bluetooth.le.ScanResult result) {
-            Log.i(TAG_LOG, "scan result" + result.toString());
+            Log.d(TAG_LOG, "scan result" + result.toString());
+//            Log.d(TAG_LOG, "device address" + result.getDevice().getAddress());
+//            Log.d(TAG_LOG, "iphone address" + iphone_uuid);
+//            Log.d(TAG_LOG, skip_count + "judge: " + result.getDevice().getAddress().toString().equals(iphone_uuid));
             BluetoothDevice device = result.getDevice();
+
+
             if (!is_connect) {
                 Log.d(TAG_LOG, "is connect");
                 if (device != null) {
                     Log.d(TAG_LOG, "device ");
                     if (!is_reconnect && device.getName() != null) {
-                        Log.d(TAG_LOG, "getname ");
-                        is_connect = true;
-                        bluetooth_gatt = result.getDevice().connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
-                    } else if (is_reconnect && skip_count > 5 && device.getName() != null) {
-                        Log.d(TAG_LOG, "reconnect:: ");
-                        is_connect = true;
-                        is_reconnect = false;
-                        bluetooth_gatt = result.getDevice().connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
+                        if(device.getName().equals("Blank")) {
+//                        if(device.getName().equals("BLE Utility")) {
+                            Log.d(TAG_LOG, "getname ");
+                            iphone_uuid = device.getAddress().toString();
+                            is_connect = true;
+                            bluetooth_gatt = result.getDevice().connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
+                        }
+//                    } else if (is_reconnect && skip_count > 5 && device.getName() != null) {
+//                    } else if (is_reconnect && skip_count > 5 && device.getAddress().toString().equals(iphone_uuid)) {
+                    } else if (is_reconnect && device.getAddress().toString().equals(iphone_uuid)) {
+                        if(!is_time) {
+                            Log.d(TAG_LOG, "-=-=-=-=-=-=-=-=-=- timer start:: -=-==-=-=-=-=-=-==--=-=-=-==-=-=-=-=-=-=-=-");
+                            start_time = System.currentTimeMillis();
+                            is_time = true;
+                        }else if(System.currentTimeMillis() - start_time > 5000){
+                            Log.d(TAG_LOG, "-=-=-=-=-=-=-=-=-=- reconnect:: -=-==-=-=-=-=-=-==--=-=-=-==-=-=-=-=-=-=-=-");
+                            is_connect = true;
+                            is_reconnect = false;
+                            bluetooth_gatt = device.connectGatt(getApplicationContext(), true, bluetooth_gattCallback);
+//                            bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
+                        }
                     } else {
                         Log.d(TAG_LOG, "skip:: ");
                         skip_count++;
@@ -252,20 +281,53 @@ public class BLEService extends Service{
         @Override
         public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
             Log.i(TAG_LOG, "onLeScan");
-            if(!is_connect) {
+//            if(!is_connect) {
+//                Log.d(TAG_LOG, "is connect");
+//                if (device != null) {
+//                    Log.d(TAG_LOG, "device ");
+//                    if (!is_reconnect && device.getName() != null) {
+//                        Log.d(TAG_LOG, "getname ");
+//                        is_connect = true;
+//                        bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
+//                    }else if(is_reconnect && skip_count > 5 && device.getName() != null){
+//                        Log.d(TAG_LOG, "reconnect:: ");
+//                        is_connect = true;
+//                        is_reconnect = false;
+//                        bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
+//                    }else {
+//                        Log.d(TAG_LOG, "skip:: ");
+//                        skip_count++;
+//                    }
+//                }
+//            }
+
+            if (!is_connect) {
                 Log.d(TAG_LOG, "is connect");
                 if (device != null) {
                     Log.d(TAG_LOG, "device ");
                     if (!is_reconnect && device.getName() != null) {
-                        Log.d(TAG_LOG, "getname ");
-                        is_connect = true;
-                        bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
-                    }else if(is_reconnect && skip_count > 5 && device.getName() != null){
-                        Log.d(TAG_LOG, "reconnect:: ");
-                        is_connect = true;
-                        is_reconnect = false;
-                        bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
-                    }else {
+                        if(device.getName().equals("Blank")) {
+//                        if(device.getName().equals("BLE Utility")) {
+                            Log.d(TAG_LOG, "getname ");
+                            iphone_uuid = device.getAddress().toString();
+                            is_connect = true;
+                            bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
+                        }
+//                    } else if (is_reconnect && skip_count > 5 && device.getName() != null) {
+//                    } else if (is_reconnect && skip_count > 5 && device.getAddress().toString().equals(iphone_uuid)) {
+                    } else if (is_reconnect && device.getAddress().toString().equals(iphone_uuid)) {
+                        if(!is_time) {
+                            Log.d(TAG_LOG, "-=-=-=-=-=-=-=-=-=- timer start:: -=-==-=-=-=-=-=-==--=-=-=-==-=-=-=-=-=-=-=-");
+                            start_time = System.currentTimeMillis();
+                            is_time = true;
+                        }else if(System.currentTimeMillis() - start_time > 5000){
+                            Log.d(TAG_LOG, "-=-=-=-=-=-=-=-=-=- reconnect:: -=-==-=-=-=-=-=-==--=-=-=-==-=-=-=-=-=-=-=-");
+                            is_connect = true;
+                            is_reconnect = false;
+//                            bluetooth_gatt = device.connectGatt(getApplicationContext(), true, bluetooth_gattCallback);
+                            bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
+                        }
+                    } else {
                         Log.d(TAG_LOG, "skip:: ");
                         skip_count++;
                     }
@@ -304,6 +366,7 @@ public class BLEService extends Service{
                 is_connect = false;
                 is_subscribed_characteristics = false;
                 skip_count = 0;
+                is_time = false;
 
 
                 // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
