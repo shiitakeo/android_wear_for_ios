@@ -306,8 +306,8 @@ public class BLEService extends Service{
                 if (device != null) {
                     Log.d(TAG_LOG, "device ");
                     if (!is_reconnect && device.getName() != null) {
-                        if(device.getName().equals("Blank")) {
-//                        if(device.getName().equals("BLE Utility")) {
+//                        if(device.getName().equals("Blank")) {
+                        if(device.getName().equals("BLE Utility")) {
                             Log.d(TAG_LOG, "getname ");
                             iphone_uuid = device.getAddress().toString();
                             is_connect = true;
