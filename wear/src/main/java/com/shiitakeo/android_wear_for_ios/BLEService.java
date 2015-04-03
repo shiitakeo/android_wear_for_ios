@@ -1,6 +1,7 @@
 package com.shiitakeo.android_wear_for_ios;
 
 import android.annotation.TargetApi;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.app.Notification;
@@ -108,6 +109,7 @@ public class BLEService extends Service{
     public void onCreate() {
     }
 
+    @TargetApi(20)
     @Override
     public void onStart(Intent intent, int startID) {
         Log.d("Service", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
@@ -163,6 +165,67 @@ public class BLEService extends Service{
             Log.d(TAG_LOG, "start BLE scan @ BluetoothAdapter");
             bluetooth_adapter.startLeScan(le_scan_callback);
         }
+
+
+//        Intent _intent = new Intent(getApplicationContext(), MusicControlActivity.class);
+        Intent _intent = new Intent(getApplicationContext(), MainActivity.class);
+//        _intent.setClassName("com.shiitakeo.android_wear_for_ios.MusicControlActivity", "com.shiitakeo.android_wear_for_ios.MusicControlActivity.subActivity");
+        PendingIntent music_control_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+//        Notification notification = new NotificationCompat.Builder(getApplicationContext())
+//                .setSmallIcon(R.drawable.superfish)
+//                .setGroup("music")
+//                .setContentIntent(music_control_intent)
+//                .addAction(R.drawable.accept, "Open", music_control_intent)
+//                .extend(new NotificationCompat.WearableExtender().setContentAction(0))
+//                .extend(new NotificationCompat.WearableExtender().setDisplayIntent(music_control_intent))
+
+//        NotificationCompat.WearableExtender ext = new NotificationCompat.WearableExtender().setDisplayIntent(music_control_intent);
+//
+//        Notification.Builder notification = new Notification.Builder(this)
+//                .setSmallIcon(R.drawable.ic_launcher)
+////                .extend(new Notification.WearableExtender().setDisplayIntent(music_control_intent).setCustomSizePreset(Notification.WearableExtender.SIZE_MEDIUM))
+//                .setContentIntent(music_control_intent)
+//                .extend(ext);
+//
+////        notificationManager.notify(notification_id, notification);
+//        NotificationManager notificationManager =
+//                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+//        notificationManager.notify(notification_id, notification.build());
+//        notification_id++;
+
+// この MainActivity は Wear アプリの MainActivity
+        Intent __intent = new Intent(this, MusicControlActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, __intent, 0);
+
+// カードをタップしたときに表示される Activity
+// ここでは ImageView 1つだけのレイアウト
+        Intent displayIntent = new Intent(this, MusicControlActivity.class);
+        PendingIntent displayPendingIntent = PendingIntent.getActivity(this,
+                0, displayIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+//        Notification.Extender wearableExtender =
+//                new Notification.Extender()
+//                        .setDisplayIntent(displayPendingIntent);
+
+        Notification.Builder notificationBuilder =
+                new Notification.Builder(this)
+                        .setSmallIcon(R.drawable.whatsapp)
+                        .setContentTitle("title")
+                        .setContentText("artist")
+                        .setContentIntent(pendingIntent)
+//                        .extend(wearableExtender);
+                .addAction(R.drawable.stop, "Controller Open", pendingIntent)
+                        .setLocalOnly(true)
+                .extend(new Notification.WearableExtender().setContentAction(0).setHintHideIcon(true))
+//                .extend(new Notification.WearableExtender().setDisplayIntent(displayPendingIntent))
+        ;
+
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(notification_id, notificationBuilder.build());
+        notification_id++;
+
     }
 
     @TargetApi(21)
@@ -476,41 +539,41 @@ public class BLEService extends Service{
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
 
-                    //find music controll service
-                    if(!is_music_control) {
-                        Log.d(TAG_LOG, "*+*+*+*+*+*+*+*+*+*+ find music control");
-                        //subscribe characteristic notification characteristic
-                        BluetoothGattService service = gatt.getService(UUID.fromString(service_blank));
-                        Log.d(TAG_LOG, " ** find service :: " + service.getUuid());
-                        List <BluetoothGattCharacteristic> chs = service.getCharacteristics();
-                        for(BluetoothGattCharacteristic ch: chs) {
-                            Log.d(TAG_LOG, "ch: " + ch);
-                        }
-                        BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("00001111-0001-1000-8000-00805f9b34fb"));
-
-                        if (characteristic == null) {
-                            Log.d(TAG_LOG, " cant find chara");
-                        } else {
-                            Log.d(TAG_LOG, " ** find chara :: " + characteristic.getUuid());
-                            if ("0001".equals(characteristic.getUuid().toString())) {
-                                Log.d(TAG_LOG, " set notify:: " + characteristic.getUuid());
-                                characteristic.setValue(new byte[] { (byte) 0x03 });
-                                gatt.writeCharacteristic(characteristic);
-                                Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
-//                                bluetooth_gatt.setCharacteristicNotification(characteristic, true);
-//                                BluetoothGattDescriptor notify_descriptor = characteristic.getDescriptor(
-//                                        UUID.fromString(descriptor_config));
-//                                if (descriptor == null) {
-//                                    Log.d(TAG_LOG, " ** not find desc :: " + notify_descriptor.getUuid());
-//                                } else {
-//                                    Log.d(TAG_LOG, " ** find desc :: " + notify_descriptor.getUuid());
-//                                    notify_descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-//                                    bluetooth_gatt.writeDescriptor(notify_descriptor);
-//                                    is_subscribed_characteristics = true;
-//                                }
-                            }
-                        }
-                    }
+//                    //find music controll service
+//                    if(!is_music_control) {
+//                        Log.d(TAG_LOG, "*+*+*+*+*+*+*+*+*+*+ find music control");
+//                        //subscribe characteristic notification characteristic
+//                        BluetoothGattService service = gatt.getService(UUID.fromString(service_blank));
+//                        Log.d(TAG_LOG, " ** find service :: " + service.getUuid());
+//                        List <BluetoothGattCharacteristic> chs = service.getCharacteristics();
+//                        for(BluetoothGattCharacteristic ch: chs) {
+//                            Log.d(TAG_LOG, "ch: " + ch);
+//                        }
+//                        BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("00001111-0001-1000-8000-00805f9b34fb"));
+//
+//                        if (characteristic == null) {
+//                            Log.d(TAG_LOG, " cant find chara");
+//                        } else {
+//                            Log.d(TAG_LOG, " ** find chara :: " + characteristic.getUuid());
+//                            if ("0001".equals(characteristic.getUuid().toString())) {
+//                                Log.d(TAG_LOG, " set notify:: " + characteristic.getUuid());
+//                                characteristic.setValue(new byte[] { (byte) 0x03 });
+//                                gatt.writeCharacteristic(characteristic);
+//                                Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
+////                                bluetooth_gatt.setCharacteristicNotification(characteristic, true);
+////                                BluetoothGattDescriptor notify_descriptor = characteristic.getDescriptor(
+////                                        UUID.fromString(descriptor_config));
+////                                if (descriptor == null) {
+////                                    Log.d(TAG_LOG, " ** not find desc :: " + notify_descriptor.getUuid());
+////                                } else {
+////                                    Log.d(TAG_LOG, " ** find desc :: " + notify_descriptor.getUuid());
+////                                    notify_descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+////                                    bluetooth_gatt.writeDescriptor(notify_descriptor);
+////                                    is_subscribed_characteristics = true;
+////                                }
+//                            }
+//                        }
+//                    }
                 }
             }else if(status == BluetoothGatt.GATT_WRITE_NOT_PERMITTED) {
                 Log.d(TAG_LOG, "status: write not permitted");
