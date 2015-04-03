@@ -96,6 +96,7 @@ public class BLEService extends Service{
 
     long start_time;
     Boolean is_time = false;
+    Boolean is_music_control = false;
 
 
     @Override
@@ -474,6 +475,42 @@ public class BLEService extends Service{
                     intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "success");
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
+
+                    //find music controll service
+                    if(!is_music_control) {
+                        Log.d(TAG_LOG, "*+*+*+*+*+*+*+*+*+*+ find music control");
+                        //subscribe characteristic notification characteristic
+                        BluetoothGattService service = gatt.getService(UUID.fromString(service_blank));
+                        Log.d(TAG_LOG, " ** find service :: " + service.getUuid());
+                        List <BluetoothGattCharacteristic> chs = service.getCharacteristics();
+                        for(BluetoothGattCharacteristic ch: chs) {
+                            Log.d(TAG_LOG, "ch: " + ch);
+                        }
+                        BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("00001111-0001-1000-8000-00805f9b34fb"));
+
+                        if (characteristic == null) {
+                            Log.d(TAG_LOG, " cant find chara");
+                        } else {
+                            Log.d(TAG_LOG, " ** find chara :: " + characteristic.getUuid());
+                            if ("0001".equals(characteristic.getUuid().toString())) {
+                                Log.d(TAG_LOG, " set notify:: " + characteristic.getUuid());
+                                characteristic.setValue(new byte[] { (byte) 0x03 });
+                                gatt.writeCharacteristic(characteristic);
+                                Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
+//                                bluetooth_gatt.setCharacteristicNotification(characteristic, true);
+//                                BluetoothGattDescriptor notify_descriptor = characteristic.getDescriptor(
+//                                        UUID.fromString(descriptor_config));
+//                                if (descriptor == null) {
+//                                    Log.d(TAG_LOG, " ** not find desc :: " + notify_descriptor.getUuid());
+//                                } else {
+//                                    Log.d(TAG_LOG, " ** find desc :: " + notify_descriptor.getUuid());
+//                                    notify_descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+//                                    bluetooth_gatt.writeDescriptor(notify_descriptor);
+//                                    is_subscribed_characteristics = true;
+//                                }
+                            }
+                        }
+                    }
                 }
             }else if(status == BluetoothGatt.GATT_WRITE_NOT_PERMITTED) {
                 Log.d(TAG_LOG, "status: write not permitted");
