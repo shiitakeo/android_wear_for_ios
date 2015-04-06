@@ -1,6 +1,7 @@
 package com.shiitakeo.android_wear_for_ios;
 
 import android.annotation.TargetApi;
+import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -120,6 +121,9 @@ public class BLEService extends Service{
         intent_filter.addAction(action_delete);
         registerReceiver(message_receiver, intent_filter);
 
+
+
+
         vib = (Vibrator)getSystemService(VIBRATOR_SERVICE);
         notificationManager = NotificationManagerCompat.from(getApplicationContext());
         packet_processor = new PacketProcessor();
@@ -211,8 +215,7 @@ public class BLEService extends Service{
         Notification.Builder notificationBuilder =
                 new Notification.Builder(this)
                         .setSmallIcon(R.drawable.whatsapp)
-                        .setContentTitle("title")
-                        .setContentText("artist")
+                        .setContentTitle("music💿")
                         .setContentIntent(pendingIntent)
 //                        .extend(wearableExtender);
                 .addAction(R.drawable.stop, "Controller Open", pendingIntent)
@@ -370,8 +373,8 @@ public class BLEService extends Service{
                 if (device != null) {
                     Log.d(TAG_LOG, "device ");
                     if (!is_reconnect && device.getName() != null) {
-//                        if(device.getName().equals("Blank")) {
-                        if(device.getName().equals("BLE Utility")) {
+                        if(device.getName().equals("Blank")) {
+//                        if(device.getName().equals("BLE Utility")) {
                             Log.d(TAG_LOG, "getname ");
                             iphone_uuid = device.getAddress().toString();
                             is_connect = true;

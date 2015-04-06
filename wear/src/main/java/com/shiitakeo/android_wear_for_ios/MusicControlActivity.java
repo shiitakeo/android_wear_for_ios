@@ -28,10 +28,13 @@ import android.support.v4.app.NotificationCompat;
 import android.support.wearable.activity.ConfirmationActivity;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.View;
+import android.widget.ImageButton;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import android.view.View.OnClickListener;
 
 /**
  * Created by shiitakeo on 15/04/03.
@@ -42,6 +45,7 @@ public class MusicControlActivity extends Activity {
     private BluetoothLeScanner le_scanner;
     private BluetoothAdapter bluetooth_adapter;
     private BluetoothGatt bluetooth_gatt;
+    private BluetoothGattCharacteristic bluetooth_gatt_chara;
     private static Boolean is_connect = false;
 
 
@@ -64,6 +68,32 @@ public class MusicControlActivity extends Activity {
         setContentView(R.layout.activity_music_control);
 
         Log.d(TAG_LOG, "-=-=-=-=-=-=-=-= onCreate -=-=-=-=-=-=-=-=-=");
+
+
+//        //イメージボタンの取得
+//        ImageButton imageBtn=(ImageButton)findViewById(R.id.volume_down);
+//        imageBtn.setOnClickListener(new OnClickListener() {
+//            //クリック時のイベント処理
+//            @Override
+//            public void onClick(View view) {
+//                bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x03});
+//                bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
+//                Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
+//            }
+//        });
+//
+//        ImageButton button_prev =(ImageButton)findViewById(R.id.previous);
+//        button_prev.setOnClickListener(new OnClickListener() {
+//            //クリック時のイベント処理
+//            @Override
+//            public void onClick(View view) {
+//                bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x04});
+//                bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
+//                Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
+//            }
+//        });
+
+
         if(bluetooth_gatt != null) {
             bluetooth_gatt.disconnect();
             bluetooth_gatt.close();
@@ -118,6 +148,39 @@ public class MusicControlActivity extends Activity {
 
     }
 
+    public void click_next_button(View view){
+        bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x03});
+        bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
+        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
+
+    }
+
+    public void click_previous_button(View view){
+        bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x04});
+        bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
+        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
+
+    }
+
+    public void click_start_stop_button(View view){
+        bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x01});
+        bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
+        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
+
+    }
+    public void click_volume_up_button(View view){
+        bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x05});
+        bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
+        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
+
+    }
+
+    public void click_volume_down_button(View view){
+        bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x06});
+        bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
+        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
+
+    }
 
     @TargetApi(21)
     private void start_le_scanner(){
@@ -241,40 +304,8 @@ public class MusicControlActivity extends Activity {
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             Log.d(TAG_LOG, "onServicesDiscovered received: " + status);
 
-//            BluetoothGattService service = gatt.getService(UUID.fromString(service_blank));
-//            List<BluetoothGattService> srvs = gatt.getServices();
-//            for (BluetoothGattService srv : srvs) {
-//                Log.d(TAG_LOG, "srv: " + srv.getUuid());
-//                if(srv.getUuid().toString().equals("00001111-0000-1000-8000-00805f9b34fb")) {
-//                    List<BluetoothGattCharacteristic> chs = srv.getCharacteristics();
-//                    for (BluetoothGattCharacteristic ch : chs) {
-//                        Log.d(TAG_LOG, "srv: " + ch.getUuid());
-//                    }
-//                }else {
-//                    Log.d(TAG_LOG, "not: " );
-//                }
-//                if(srv.getUuid().toString().equals("00001111-0001-1000-8000-00805f9b34fb")) {
-//                    Log.d(TAG_LOG, "0001: " );
-//                    List<BluetoothGattCharacteristic> chs = srv.getCharacteristics();
-//                    for (BluetoothGattCharacteristic ch : chs) {
-//                        Log.d(TAG_LOG, "srv: " + ch.getUuid());
-//                    }
-//                }
-//            }
-//            BluetoothGattService service = gatt.getService(UUID.fromString(service_blank));
-//            private static final String service_blank = "00001111-0000-1000-8000-00805f9b34fb";
-            //this is BLE Utility's reuslt?
-            //=> cache.......
-//            01-01 21:06:34.353  10572-10588/com.shiitakeo.android_wear_for_ios D/BLE_wear﹕ onServicesDiscovered received: 0
-//            01-01 21:06:34.353  10572-10588/com.shiitakeo.android_wear_for_ios D/BLE_wear﹕ srv: 00001800-0000-1000-8000-00805f9b34fb
-//            01-01 21:06:34.353  10572-10588/com.shiitakeo.android_wear_for_ios D/BLE_wear﹕ srv: 00001801-0000-1000-8000-00805f9b34fb
-//            01-01 21:06:34.353  10572-10588/com.shiitakeo.android_wear_for_ios D/BLE_wear﹕ srv: d0611e78-bbb4-4591-a5f8-487910ae4366
-//            01-01 21:06:34.353  10572-10588/com.shiitakeo.android_wear_for_ios D/BLE_wear﹕ srv: 7905f431-b5ce-4e99-a40f-4b1e122d00d0
-//            01-01 21:06:34.353  10572-10588/com.shiitakeo.android_wear_for_ios D/BLE_wear﹕ srv: 0000180f-0000-1000-8000-00805f9b34fb
-//            01-01 21:06:34.353  10572-10588/com.shiitakeo.android_wear_for_ios D/BLE_wear﹕ srv: 00001805-0000-1000-8000-00805f9b34fb
-//            01-01 21:06:34.353  10572-10588/com.shiitakeo.android_wear_for_ios D/BLE_wear﹕ srv: 89d3502b-0f36-433a-8ef4-c502ad55f8dc
-
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                bluetooth_gatt = gatt;
 
                 //subscribe characteristic notification characteristic
                 BluetoothGattService service = gatt.getService(UUID.fromString(service_blank));
@@ -286,8 +317,9 @@ public class MusicControlActivity extends Activity {
                     Log.d(TAG_LOG, " ** find chara :: " + characteristic.getUuid());
 //                    if ("0001".equals(characteristic.getUuid().toString())) {
                         Log.d(TAG_LOG, " set notify:: " + characteristic.getUuid());
-                        characteristic.setValue(new byte[]{(byte) 0x03});
-                        gatt.writeCharacteristic(characteristic);
+                    bluetooth_gatt_chara = characteristic;
+//                        characteristic.setValue(new byte[]{(byte) 0x03});
+//                        gatt.writeCharacteristic(characteristic);
                         Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
 //                                bluetooth_gatt.setCharacteristicNotification(characteristic, true);
 //                                BluetoothGattDescriptor notify_descriptor = characteristic.getDescriptor(
