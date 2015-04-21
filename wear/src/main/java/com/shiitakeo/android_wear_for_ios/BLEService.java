@@ -100,6 +100,7 @@ public class BLEService extends Service{
     String action_negative = "com.shiitakeo.perform_notification_action_negative";
     String action_delete = "com.shiitakeo.delete";
     String action_set_clock = "com.shiitakeo.set_clock";
+    String extra_uid = "com.shiitakeo.extra_uid";
 
     private static final long screen_time_out = 1000;
     private Boolean is_reconnect = false;
@@ -184,7 +185,7 @@ public class BLEService extends Service{
 
 
         Intent _intent = new Intent(getApplicationContext(), MainActivity.class);
-        PendingIntent music_control_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent music_control_intent = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
 
 // この MainActivity は Wear アプリの MainActivity
@@ -214,9 +215,13 @@ public class BLEService extends Service{
 //                .extend(new Notification.WearableExtender().setDisplayIntent(displayPendingIntent))
         ;
 
+        Notification _notification = notificationBuilder.build();
+        _notification.flags = _notification.flags | Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.notify(notification_id, notificationBuilder.build());
+//        notificationManager.notify(notification_id, notificationBuilder.build());
+        notificationManager.notify(notification_id, _notification);
         notification_id++;
 
     }
@@ -254,6 +259,10 @@ public class BLEService extends Service{
             bluetooth_gatt = null;
         }
         bluetooth_adapter = null;
+        if(notificationManager != null) {
+            notificationManager.cancelAll();
+            notificationManager = null;
+        }
         super.onDestroy();
     }
 
@@ -508,7 +517,8 @@ public class BLEService extends Service{
                 //
                 Intent _intent_set_clock = new Intent();
                 _intent_set_clock.setAction(action_set_clock);
-                PendingIntent _set_clock_action = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent_set_clock, PendingIntent.FLAG_CANCEL_CURRENT);
+                PendingIntent _set_clock_action = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent_set_clock, PendingIntent.FLAG_CANCEL_CURRENT);
+                notification_id++;
             }
         }
 
@@ -662,18 +672,25 @@ public class BLEService extends Service{
                     Bitmap large_icon = BitmapFactory.decodeResource(getResources(), app_logo);
                     Log.d(TAG_LOG, "in title: notification");
 
+
+
+                    byte[] _uid = packet_processor.get_uid();
                     //create perform notification action pending_intent
                     Intent _intent_positive = new Intent();
                     _intent_positive.setAction(action_positive);
-                    PendingIntent _positive_action = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent_positive, PendingIntent.FLAG_CANCEL_CURRENT);
+                    _intent_positive.putExtra(extra_uid, _uid);
+                    PendingIntent _positive_action = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent_positive, PendingIntent.FLAG_ONE_SHOT);
 
                     Intent _intent_negative = new Intent();
                     _intent_negative.setAction(action_negative);
-                    PendingIntent _negative_action = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent_negative, PendingIntent.FLAG_CANCEL_CURRENT);
+                    _intent_negative.putExtra(extra_uid, _uid);
+                    //0 => notification_idでインクリメントしてる
+                    PendingIntent _negative_action = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent_negative, PendingIntent.FLAG_ONE_SHOT);
 
                     Intent _intent_delete = new Intent();
                     _intent_delete.setAction(action_delete);
-                    PendingIntent _delete_action = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent_delete, PendingIntent.FLAG_CANCEL_CURRENT);
+                    _intent_delete.putExtra(extra_uid, _uid);
+                    PendingIntent _delete_action = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent_delete, PendingIntent.FLAG_ONE_SHOT);
 
                     Notification notification = new NotificationCompat.Builder(getApplicationContext())
                             .setContentTitle(packet_processor.get_ds_title())
@@ -685,6 +702,9 @@ public class BLEService extends Service{
                             .addAction(R.drawable.ic_decline, "Decline", _negative_action)
                             .setDeleteIntent(_delete_action)
                             .build();
+                    //
+                    //notification_id => mediaとかREGULARで固定してる
+                    //UIDから生成するユニークなtagをつかっている．タグを使う場合，タグとIDのペアがユニークであればよい．
                     notificationManager.notify(notification_id, notification);
                     notification_id++;
                     vib.vibrate(pattern, -1);
@@ -783,6 +803,13 @@ public class BLEService extends Service{
         if (action.equals(action_positive) | action.equals(action_negative) | action.equals(action_delete)){
                 Log.d(TAG_LOG, "get action: " + action);
 
+                //get notification uid
+                byte[] _uid = intent.getByteArrayExtra(extra_uid);
+                for(int i = 0; i < _uid.length; i++) {
+                    Log.d(TAG_LOG, "@@uid@@ :: " + Integer.toHexString(_uid[i]));
+                }
+                Log.d(TAG_LOG, "*+*+*++*+*+*+*+*+*+*+*+*+");
+
                 // set action id
                 byte _action_id = 0x00;
                 if(action.equals(action_negative) | action.equals(action_delete)) {
@@ -795,7 +822,7 @@ public class BLEService extends Service{
                     byte[] get_notification_attribute = {
                             (byte)0x02,
                             //UID
-                            uid[0], uid[1], uid[2], uid[3],
+                            _uid[0], _uid[1], _uid[2], _uid[3],
                             //action
                             _action_id
                     };
