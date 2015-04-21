@@ -58,6 +58,14 @@ public class MusicControlActivity extends Activity {
 
     private static final String descriptor_config = "00002902-0000-1000-8000-00805f9b34fb";
     private static final String service_blank = "00001111-0000-1000-8000-00805f9b34fb";
+
+
+    //ams
+    private static final String service_ams = "89d3502b-0f36-433a-8ef4-c502ad55f8dc";
+    private static final String characteristics_remote_command = "9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2";
+    private static final String characteristics_entity_update = "2f7cabce-808d-411f-9a0c-bb92ba96c102";
+    private static final String characteristics_entity_attribute = "c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7";
+
     String iphone_uuid = "";
 
 
@@ -314,8 +322,12 @@ public class MusicControlActivity extends Activity {
                 bluetooth_gatt = gatt;
 
                 //subscribe characteristic notification characteristic
-                BluetoothGattService service = gatt.getService(UUID.fromString(service_blank));
-                BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("00001111-0001-1000-8000-00805f9b34fb"));
+                //for my app
+//                BluetoothGattService service = gatt.getService(UUID.fromString(service_blank));
+//                BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("00001111-0001-1000-8000-00805f9b34fb"));
+                // for ams
+                BluetoothGattService service = gatt.getService(UUID.fromString(service_ams));
+                BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(characteristics_remote_command));
 
                 if (characteristic == null) {
                     Log.d(TAG_LOG, " cant find chara");
