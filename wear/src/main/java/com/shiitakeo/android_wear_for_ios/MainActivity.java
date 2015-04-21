@@ -31,15 +31,16 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         Log.d(TAG_LOG, "-=-=-=-=-=-=-=-= onCreate -=-=-=-=-=-=-=-=-=");
-//        RootTools.isAccessGiven();
 
+        /*
         try {
+            Log.d(TAG_LOG, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
             Process process = Runtime.getRuntime().exec("su");
             DataOutputStream os = new DataOutputStream(process.getOutputStream());
-//            os.writeBytes("date -s 20120419.024012; \n");
+            os.writeBytes("date -s 20120419.024012; \n");
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(2015, 04, 05, 16, 39, 00);
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(2015, 04, 05, 16, 39, 00);
 
 
             int year = calendar.get(Calendar.YEAR);
@@ -48,9 +49,22 @@ public class MainActivity extends Activity {
             int hour = calendar.get(Calendar.HOUR_OF_DAY);
             int minute = calendar.get(Calendar.MINUTE);
             int second = calendar.get(Calendar.SECOND);
+
+            // check rooted device.
+//            if(RootTools.isRootAvailable()) {
+//                if (RootTools.isAccessGiven()) {
+//                    Command command = new Command(0, "chmod  777 /dev/alarm");
+//                    RootTools.getShell(true).add(command).wait();
+////                                os.writeBytes("date -s 20150405.164600; \n");
+//                    command = new Command(0, "data -s 20150406.170000");
+//                    RootTools.getShell(true).add(command);
+//                    command = new Command(0, "chmod  644 /dev/alarm");
+//                    RootTools.getShell(true).add(command);
+//                }
+//            }
+
 //        am.setTime(c.getTimeInMillis());
 //            os.writeBytes("date -s 20120419.024012; \n");
-            os.writeBytes("date -s 20150405.164600; \n");
 //            os.writeBytes("date -s " + year + month + day + "." + hour + minute + second + "; \n");
         } catch (Exception e) {
             Log.d(TAG_LOG,"error=="+e.toString());
@@ -91,7 +105,7 @@ public class MainActivity extends Activity {
 //        } catch (Exception e) {
 //// Why is this exception thrown?
 //        }
-
+*/
 
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Log.d(TAG_LOG, "not supported ble");

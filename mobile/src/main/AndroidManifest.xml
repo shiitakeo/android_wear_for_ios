@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.SET_TIME_ZONE"/>
+    <permission android:name="android.permission.SET_TIME"/>
 
     <application
         android:allowBackup="true"

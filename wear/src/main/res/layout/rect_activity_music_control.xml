@@ -50,7 +50,7 @@
         android:id="@+id/start_stop"
         android:src="@drawable/stop_state"
         android:background="@null"
-        android:onClick="click_start_stop_button"
+        android:onClick="click_stop_button"
         android:layout_alignTop="@+id/previous"
         android:layout_centerHorizontal="true" />
 

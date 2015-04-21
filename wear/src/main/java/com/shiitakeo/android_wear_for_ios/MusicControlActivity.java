@@ -161,9 +161,15 @@ public class MusicControlActivity extends Activity {
         Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
 
     }
-
-    public void click_start_stop_button(View view){
+    public void click_start_button(View view){
         bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x01});
+        bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
+        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
+
+    }
+
+    public void click_stop_button(View view){
+        bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x02});
         bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
         Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
 
@@ -270,8 +276,8 @@ public class MusicControlActivity extends Activity {
                 if (device != null) {
                     Log.d(TAG_LOG, "device ");
                     if (device.getName() != null) {
-                        if(device.getName().equals("Blank")) {
-//                        if(device.getName().equals("BLE Utility")) {
+//                        if(device.getName().equals("Blank")) {
+                        if(device.getName().equals("BLE Utility")) {
                             Log.d(TAG_LOG, "getname: " + device.getName());
                             iphone_uuid = device.getAddress().toString();
                             is_connect = true;
@@ -316,11 +322,11 @@ public class MusicControlActivity extends Activity {
                 } else {
                     Log.d(TAG_LOG, " ** find chara :: " + characteristic.getUuid());
 //                    if ("0001".equals(characteristic.getUuid().toString())) {
-                        Log.d(TAG_LOG, " set notify:: " + characteristic.getUuid());
+                    Log.d(TAG_LOG, " set notify:: " + characteristic.getUuid());
                     bluetooth_gatt_chara = characteristic;
 //                        characteristic.setValue(new byte[]{(byte) 0x03});
 //                        gatt.writeCharacteristic(characteristic);
-                        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
+                    Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
 //                                bluetooth_gatt.setCharacteristicNotification(characteristic, true);
 //                                BluetoothGattDescriptor notify_descriptor = characteristic.getDescriptor(
 //                                        UUID.fromString(descriptor_config));

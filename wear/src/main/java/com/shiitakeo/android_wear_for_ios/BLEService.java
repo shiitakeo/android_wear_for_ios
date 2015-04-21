@@ -15,6 +15,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothSocket;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
@@ -37,8 +38,11 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.wearable.activity.ConfirmationActivity;
 import android.util.Log;
 
+import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -89,6 +93,7 @@ public class BLEService extends Service{
     String action_positive = "com.shiitakeo.perform_notification_action_positive";
     String action_negative = "com.shiitakeo.perform_notification_action_negative";
     String action_delete = "com.shiitakeo.delete";
+    String action_set_clock = "com.shiitakeo.set_clock";
 
     private static final long screen_time_out = 1000;
     private Boolean is_reconnect = false;
@@ -108,12 +113,13 @@ public class BLEService extends Service{
 
     @Override
     public void onCreate() {
+        Log.d(TAG_LOG, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
     }
 
     @TargetApi(20)
     @Override
     public void onStart(Intent intent, int startID) {
-        Log.d("Service", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+        Log.d(TAG_LOG, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
         IntentFilter intent_filter = new IntentFilter();
         intent_filter.addAction(action_positive);
@@ -171,32 +177,9 @@ public class BLEService extends Service{
         }
 
 
-//        Intent _intent = new Intent(getApplicationContext(), MusicControlActivity.class);
         Intent _intent = new Intent(getApplicationContext(), MainActivity.class);
-//        _intent.setClassName("com.shiitakeo.android_wear_for_ios.MusicControlActivity", "com.shiitakeo.android_wear_for_ios.MusicControlActivity.subActivity");
         PendingIntent music_control_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-//        Notification notification = new NotificationCompat.Builder(getApplicationContext())
-//                .setSmallIcon(R.drawable.superfish)
-//                .setGroup("music")
-//                .setContentIntent(music_control_intent)
-//                .addAction(R.drawable.accept, "Open", music_control_intent)
-//                .extend(new NotificationCompat.WearableExtender().setContentAction(0))
-//                .extend(new NotificationCompat.WearableExtender().setDisplayIntent(music_control_intent))
-
-//        NotificationCompat.WearableExtender ext = new NotificationCompat.WearableExtender().setDisplayIntent(music_control_intent);
-//
-//        Notification.Builder notification = new Notification.Builder(this)
-//                .setSmallIcon(R.drawable.ic_launcher)
-////                .extend(new Notification.WearableExtender().setDisplayIntent(music_control_intent).setCustomSizePreset(Notification.WearableExtender.SIZE_MEDIUM))
-//                .setContentIntent(music_control_intent)
-//                .extend(ext);
-//
-////        notificationManager.notify(notification_id, notification);
-//        NotificationManager notificationManager =
-//                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-//        notificationManager.notify(notification_id, notification.build());
-//        notification_id++;
 
 // この MainActivity は Wear アプリの MainActivity
         Intent __intent = new Intent(this, MusicControlActivity.class);
@@ -215,7 +198,8 @@ public class BLEService extends Service{
         Notification.Builder notificationBuilder =
                 new Notification.Builder(this)
                         .setSmallIcon(R.drawable.whatsapp)
-                        .setContentTitle("music💿")
+//                        .setContentTitle("music💿")
+                        .setContentTitle("tv📺")
                         .setContentIntent(pendingIntent)
 //                        .extend(wearableExtender);
                 .addAction(R.drawable.stop, "Controller Open", pendingIntent)
@@ -373,13 +357,38 @@ public class BLEService extends Service{
                 if (device != null) {
                     Log.d(TAG_LOG, "device ");
                     if (!is_reconnect && device.getName() != null) {
-                        if(device.getName().equals("Blank")) {
-//                        if(device.getName().equals("BLE Utility")) {
+//                        if(device.getName().equals("Blank")) {
+                        if(device.getName().equals("BLE Utility")) {
                             Log.d(TAG_LOG, "getname ");
                             iphone_uuid = device.getAddress().toString();
+                            Log.d(TAG_LOG, "iphone_uuid: " + iphone_uuid);
                             is_connect = true;
+                            //----*
+
+                            // get paired devices
+                            Set<BluetoothDevice> _paired_devices = bluetooth_adapter.getBondedDevices();
+
+                            Log.d(TAG_LOG, "for1 *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
+                            for(BluetoothDevice _paired_device: _paired_devices) {
+                                Log.d(TAG_LOG, "paired device: " + _paired_device + " :: " + _paired_device.getName());
+                                Log.d(TAG_LOG, "++ " + _paired_device.getAddress() + " :: " + _paired_device.getUuids());
+                                if(_paired_device.getAddress().toString().equals(iphone_uuid)) {
+                                    Log.d(TAG_LOG, "find 1: *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
+                                    try {
+
+                                        BluetoothSocket b_s = _paired_device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
+                                        b_s.connect();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                }
+                            }
+                            //----*
+                            Log.d(TAG_LOG, "1: connect gatt");
                             bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
                         }
+
 //                    } else if (is_reconnect && skip_count > 5 && device.getName() != null) {
 //                    } else if (is_reconnect && skip_count > 5 && device.getAddress().toString().equals(iphone_uuid)) {
                     } else if (is_reconnect && device.getAddress().toString().equals(iphone_uuid)) {
@@ -391,6 +400,29 @@ public class BLEService extends Service{
                             Log.d(TAG_LOG, "-=-=-=-=-=-=-=-=-=- reconnect:: -=-==-=-=-=-=-=-==--=-=-=-==-=-=-=-=-=-=-=-");
                             is_connect = true;
                             is_reconnect = false;
+                            //----*
+
+                            // get paired devices
+                            Set<BluetoothDevice> _paired_devices = bluetooth_adapter.getBondedDevices();
+
+                            Log.d(TAG_LOG, "for1 *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
+                            for(BluetoothDevice _paired_device: _paired_devices) {
+                                Log.d(TAG_LOG, "paired device: " + _paired_device + " :: " + _paired_device.getName());
+                                Log.d(TAG_LOG, "++ " + _paired_device.getAddress() + " :: " + _paired_device.getUuids());
+                                if(_paired_device.getAddress().toString().equals(iphone_uuid)) {
+                                    Log.d(TAG_LOG, "find 1: *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
+                                    try {
+
+                                        BluetoothSocket b_s = _paired_device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
+                                        b_s.connect();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                }
+                            }
+                            //----*
+                            Log.d(TAG_LOG, "connect gatt");
 //                            bluetooth_gatt = device.connectGatt(getApplicationContext(), true, bluetooth_gattCallback);
                             bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
                         }
@@ -448,6 +480,7 @@ public class BLEService extends Service{
                     return;
                 }
 
+
                 is_reconnect = true;
                 Log.d(TAG_LOG, "start BLE scan");
                 if(api_level >= 21) {
@@ -462,6 +495,14 @@ public class BLEService extends Service{
                 intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "airplane mode on -> off, after restart app.");
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
+
+
+                // time intent
+                // intent -> connect gatt -> discover time service -> read time service chara
+                //
+                Intent _intent_set_clock = new Intent();
+                _intent_set_clock.setAction(action_set_clock);
+                PendingIntent _set_clock_action = PendingIntent.getBroadcast(getApplicationContext(), 0, _intent_set_clock, PendingIntent.FLAG_CANCEL_CURRENT);
             }
         }
 
@@ -733,7 +774,7 @@ public class BLEService extends Service{
 
             // perform notification action: immediately
             // delete intent: after 7~8sec.
-            if (action.equals(action_positive) | action.equals(action_negative) | action.equals(action_delete)){
+        if (action.equals(action_positive) | action.equals(action_negative) | action.equals(action_delete)){
                 Log.d(TAG_LOG, "get action: " + action);
 
                 // set action id
@@ -772,6 +813,7 @@ public class BLEService extends Service{
                     e.printStackTrace();
                 }
                 Log.d(TAG_LOG, "onReceive");
+            }else if(action.equals(action_set_clock)) {
             }
         }
     }
