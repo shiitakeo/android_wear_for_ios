@@ -38,7 +38,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.wearable.activity.ConfirmationActivity;
 import android.util.Log;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +74,10 @@ public class BLEService extends Service{
     private static final String characteristics_remote_command = "9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2";
     private static final String characteristics_entity_update = "2f7cabce-808d-411f-9a0c-bb92ba96c102";
     private static final String characteristics_entity_attribute = "c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7";
+
+    //CTS Profile
+    private static final String service_cts = "00001805-0000-1000-8000-00805f9b34fb";
+    private static final String characteristics_current_time = "00002a2b-0000-1000-8000-00805f9b34fb";
 
 
     private Boolean is_subscribed_characteristics = false;
@@ -558,6 +564,101 @@ public class BLEService extends Service{
                         }
                     }
                 }
+                // get current time
+//                Log.d(TAG_LOG, "get time+_=-=_=-+-+-+-=_=_=_+-=-=-=-=");
+//                BluetoothGattService _service = gatt.getService(UUID.fromString(service_cts));
+//                if (_service == null) {
+//                    Log.d(TAG_LOG, "cant find service");
+//                } else {
+//                    Log.d(TAG_LOG, "find service");
+//                    Log.d(TAG_LOG, String.valueOf(bluetooth_gatt.getServices()));
+//
+//                    // subscribe data source characteristic
+//                    BluetoothGattCharacteristic data_characteristic = _service.getCharacteristic(UUID.fromString(characteristics_current_time));
+//
+//                    if (data_characteristic == null) {
+//                        Log.d(TAG_LOG, "cant find data source chara");
+//                    } else {
+//                        Log.d(TAG_LOG, "find data source chara :: " + data_characteristic.getUuid());
+//
+//
+//                    }
+//                }
+            }
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt,
+                                         BluetoothGattCharacteristic characteristic,
+                                         int status) {
+            Log.d(TAG_LOG, "onCharacteristicRead:: " + status);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d(TAG_LOG, "8=8==8=8=8=8===8=8=8=8=8=8==8=8=8=8=8==88=8=8=8=");
+                String month_prefix = "";
+                String day_prefix = "";
+                String hour_prefix = "";
+                String min_prefix = "";
+                String sec_prefix = "";
+
+                int year = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT16, 0);
+                Log.d(TAG_LOG, "year:: " + year);
+
+                int month  = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 2);
+                if(month < 10) {
+                    month_prefix = new String("0" + month);
+                    Log.d(TAG_LOG, "month_pre:: " + month_prefix);
+                }else {
+                    month_prefix = String.valueOf(month);
+                    Log.d(TAG_LOG, "month_pre:: " + month_prefix);
+                }
+
+                int day = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 3);
+                if(day < 10) {
+                    day_prefix = new String("0" + day);
+                    Log.d(TAG_LOG, "day_pre:: " + day_prefix);
+                }else {
+                    day_prefix = String.valueOf(day);
+                    Log.d(TAG_LOG, "day_pre:: " + day_prefix);
+                }
+                int hour = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 4);
+                if(hour < 10) {
+                    hour_prefix = new String("0" + hour);
+                    Log.d(TAG_LOG, "hour_pre:: " + hour_prefix);
+                }else {
+                    hour_prefix = String.valueOf(hour);
+                    Log.d(TAG_LOG, "hour_pre:: " + hour_prefix);
+                }
+
+                int min = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 5);
+                if(min < 10) {
+                    min_prefix = new String("0" + min);
+                    Log.d(TAG_LOG, "min_pre:: " + min_prefix);
+                }else {
+                    min_prefix = String.valueOf(min);
+                    Log.d(TAG_LOG, "min_pre:: " + min_prefix);
+                }
+
+                int sec = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 6);
+                if(sec < 10) {
+                    sec_prefix = new String("0" + sec);
+                    Log.d(TAG_LOG, "sec_pre:: " + sec_prefix);
+                }else {
+                    sec_prefix = String.valueOf(sec);
+                    Log.d(TAG_LOG, "sec_pre:: " + sec_prefix);
+                }
+
+                int date = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 7);
+                Log.d(TAG_LOG, "date:: " + date);
+
+                try {
+                    Process process = Runtime.getRuntime().exec("su");
+                    DataOutputStream os = new DataOutputStream(process.getOutputStream());
+                    String set_time = new String("date -s " + year + month_prefix + day_prefix + "." + hour_prefix + min_prefix + sec_prefix);
+                    Log.d(TAG_LOG, "set_time: " + set_time);
+                    os.writeBytes(set_time);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -598,6 +699,27 @@ public class BLEService extends Service{
                     intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "success");
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
+
+                    // get current time
+                    Log.d(TAG_LOG, ":get time+_=-=_=-+-+-+-=_=_=_+-=-=-=-=");
+                    BluetoothGattService _service = gatt.getService(UUID.fromString(service_cts));
+                    if (_service == null) {
+                        Log.d(TAG_LOG, "cant find service");
+                    } else {
+                        Log.d(TAG_LOG, "find service");
+                        Log.d(TAG_LOG, String.valueOf(bluetooth_gatt.getServices()));
+
+                        // subscribe data source characteristic
+                        BluetoothGattCharacteristic data_characteristic = _service.getCharacteristic(UUID.fromString(characteristics_current_time));
+
+                        if (data_characteristic == null) {
+                            Log.d(TAG_LOG, "cant find data source chara");
+                        } else {
+                            Log.d(TAG_LOG, "find data source chara :: " + data_characteristic.getUuid());
+                            gatt.readCharacteristic(data_characteristic);
+                        }
+                    }
+
 
 //                    //find music controll service
 //                    if(!is_music_control) {
@@ -716,6 +838,28 @@ public class BLEService extends Service{
                         Log.d(TAG_LOG, "acquire()");
                         wake_lock.acquire(screen_time_out);
                     }
+
+
+
+                    // get current time
+//                    Log.d(TAG_LOG, ":get time+_=-=_=-+-+-+-=_=_=_+-=-=-=-=");
+//                    BluetoothGattService _service = gatt.getService(UUID.fromString(service_cts));
+//                    if (_service == null) {
+//                        Log.d(TAG_LOG, "cant find service");
+//                    } else {
+//                        Log.d(TAG_LOG, "find service");
+//                        Log.d(TAG_LOG, String.valueOf(bluetooth_gatt.getServices()));
+//
+//                        // subscribe data source characteristic
+//                        BluetoothGattCharacteristic data_characteristic = _service.getCharacteristic(UUID.fromString(characteristics_current_time));
+//
+//                        if (data_characteristic == null) {
+//                            Log.d(TAG_LOG, "cant find data source chara");
+//                        } else {
+//                            Log.d(TAG_LOG, "find data source chara :: " + data_characteristic.getUuid());
+//                            gatt.readCharacteristic(data_characteristic);
+//                        }
+//                    }
                 }
             }
 
