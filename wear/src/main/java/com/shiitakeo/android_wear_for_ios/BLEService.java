@@ -222,7 +222,7 @@ public class BLEService extends Service{
 //                        .setContentTitle("tv📺")
                         .setContentIntent(pendingIntent)
 //                        .extend(wearableExtender);
-                .addAction(R.drawable.stop, "Controller Open", pendingIntent)
+                .addAction(R.drawable.resume, "Controller Open", pendingIntent)
                         .setLocalOnly(true)
                 .extend(new Notification.WearableExtender().setContentAction(0).setHintHideIcon(true))
 //                        .addAction(R.drawable.decline, "delete music controller", _delete_action)
@@ -524,11 +524,20 @@ public class BLEService extends Service{
                 }
 
                 //execute success animation
-                Intent intent = new Intent(getApplicationContext(), ConfirmationActivity.class);
-                intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION);
-                intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "airplane mode on -> off, after restart app.");
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+//                Intent intent = new Intent(getApplicationContext(), ConfirmationActivity.class);
+//                intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION);
+//                intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "airplane mode on -> off, after restart app.");
+//                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                startActivity(intent);
+
+
+//                Intent _intent = new Intent(Intent.ACTION_MAIN);
+//                intent.addCategory(Intent.CATEGORY_HOME);
+//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//                        | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+//                startActivity(_intent);
+
+
 
 
                 // time intent
@@ -786,6 +795,63 @@ public class BLEService extends Service{
                     e.printStackTrace();
                 }
                 gatt.disconnect();
+
+                Log.d(TAG_LOG, "onDisconnect: ");
+
+                if(api_level >= 21) {
+                    if (le_scanner != null) {
+                        Log.d(TAG_LOG, "status: ble reset");
+                        stop_le_scanner();
+                    }
+                }
+                if(bluetooth_gatt != null) {
+                    bluetooth_gatt.disconnect();
+                    bluetooth_gatt.close();
+                    bluetooth_gatt = null;
+                }
+                if(bluetooth_adapter != null) {
+                    bluetooth_adapter = null;
+                }
+                is_connect = false;
+                is_subscribed_characteristics = false;
+                skip_count = 0;
+                is_time = false;
+
+
+                // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
+                // BluetoothAdapter through BluetoothManager.
+                final BluetoothManager bluetoothManager =
+                        (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+                bluetooth_adapter = bluetoothManager.getAdapter();
+
+                // Checks if Bluetooth is supported on the device.
+                if (bluetooth_adapter == null) {
+                    Log.d(TAG_LOG, "ble adapter is null");
+                    return;
+                }
+
+
+                is_reconnect = true;
+                Log.d(TAG_LOG, "start BLE scan");
+                if(api_level >= 21) {
+                    start_le_scanner();
+                }else {
+                    bluetooth_adapter.startLeScan(le_scan_callback);
+                }
+
+                //execute success animation
+//                Intent intent = new Intent(getApplicationContext(), ConfirmationActivity.class);
+//                intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION);
+//                intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "airplane mode on -> off, after restart app.");
+//                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                startActivity(intent);
+
+
+//                Intent _intent = new Intent(Intent.ACTION_MAIN);
+//                intent.addCategory(Intent.CATEGORY_HOME);
+//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//                        | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+//                startActivity(_intent);
             }
         }
 
@@ -1038,11 +1104,11 @@ public class BLEService extends Service{
                 Notification.Builder notificationBuilder =
                         new Notification.Builder(getApplicationContext())
                                 .setSmallIcon(R.drawable.whatsapp)
-                            .setContentTitle("music💿")
+                            .setContentTitle("music 💿")
 //                                .setContentTitle("tv📺")
                                 .setContentIntent(pendingIntent)
     //                        .extend(wearableExtender);
-                                .addAction(R.drawable.stop, "Controller Open", pendingIntent)
+                                .addAction(R.drawable.resume, "Controller Open", pendingIntent)
 //                                .setLocalOnly(true)
                                 .extend(new Notification.WearableExtender().setContentAction(0).setHintHideIcon(true))
     //                .extend(new Notification.WearableExtender().setDisplayIntent(displayPendingIntent))

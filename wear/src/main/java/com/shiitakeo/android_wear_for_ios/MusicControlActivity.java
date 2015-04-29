@@ -17,8 +17,10 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import android.view.View.OnClickListener;
+import android.widget.TextView;
 
 /**
  * Created by shiitakeo on 15/04/03.
@@ -68,6 +71,15 @@ public class MusicControlActivity extends Activity {
 
     String iphone_uuid = "";
     Boolean is_set_entity = false;
+    private BroadcastReceiver message_receiver = new MessageReceiver();
+
+    // intent action
+    String action_positive = "com.shiitakeo.pos";
+    String action_negative = "com.shiitakeo.neg";
+    String action_delete = "com.shiitakeo.del";
+    String action_renotify = "com.shiitakeo.ren";
+    String action_set_clock = "com.shiitakeo.set_clock";
+    String extra_uid = "com.shiitakeo.extra_uid";
 
 
 
@@ -77,6 +89,12 @@ public class MusicControlActivity extends Activity {
         setContentView(R.layout.activity_music_control);
 
         Log.d(TAG_LOG, "-=-=-=-=-=-=-=-= onCreate -=-=-=-=-=-=-=-=-=");
+        IntentFilter intent_filter = new IntentFilter();
+        intent_filter.addAction(action_positive);
+        intent_filter.addAction(action_negative);
+        intent_filter.addAction(action_delete);
+        intent_filter.addAction(action_renotify);
+        registerReceiver(message_receiver, intent_filter);
 
 
 //        //イメージボタンの取得
@@ -502,6 +520,28 @@ public class MusicControlActivity extends Activity {
                 String str = characteristic.getStringValue(3);
                 Log.d(TAG_LOG, "new music: " + str);
 
+                if(get_data[1] == (byte)0x00) {
+                    Log.d(TAG_LOG, "artist");
+
+//                    TextView textView = (TextView) findViewById(R.id.text_artist);
+//                    textView.setText(str);
+                    Intent _intent_positive = new Intent();
+                    _intent_positive.setAction(action_positive);
+                    _intent_positive.putExtra(extra_uid, str);
+                    sendBroadcast(_intent_positive);
+                }else if(get_data[1] == (byte)0x02) {
+                    Log.d(TAG_LOG, "title");
+                    Intent _intent_positive = new Intent();
+                    _intent_positive.setAction(action_negative);
+                    _intent_positive.putExtra(extra_uid, str);
+                    sendBroadcast(_intent_positive);
+//                    TextView textView = (TextView) findViewById(R.id.text_title);
+//                    textView.setText(str);
+                }
+
+//                PendingIntent _positive_action = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent_positive, PendingIntent.FLAG_ONE_SHOT);
+
+
             }
             if (characteristics_entity_attribute.toString().equals(characteristic.getUuid().toString())) {
                 Log.d(TAG_LOG, "att ");
@@ -517,4 +557,36 @@ public class MusicControlActivity extends Activity {
             }
         }
     };
+
+    @TargetApi(20)
+    public class MessageReceiver extends BroadcastReceiver {
+        private static final String TAG_LOG = "BLE_wear";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG_LOG, "onReceive");
+            String action = intent.getAction();
+
+            // perform notification action: immediately
+            // delete intent: after 7~8sec.
+            if (action.equals(action_positive)) {
+                Log.d(TAG_LOG, "get action: " + action);
+
+                String str = intent.getStringExtra(extra_uid);
+                Log.d(TAG_LOG, "get artist: " + str);
+
+                TextView textView = (TextView) findViewById(R.id.text_artist);
+                textView.setText(str);
+            }
+            else if (action.equals(action_negative)) {
+                Log.d(TAG_LOG, "get action: " + action);
+
+                String str = intent.getStringExtra(extra_uid);
+                Log.d(TAG_LOG, "get title: " + str);
+
+                TextView textView = (TextView) findViewById(R.id.text_title);
+                textView.setText(str);
+            }
+        }
+    }
 }
