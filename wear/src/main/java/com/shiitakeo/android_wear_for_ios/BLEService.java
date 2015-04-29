@@ -41,6 +41,7 @@ import android.util.Log;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,6 +106,7 @@ public class BLEService extends Service{
     String action_positive = "com.shiitakeo.perform_notification_action_positive";
     String action_negative = "com.shiitakeo.perform_notification_action_negative";
     String action_delete = "com.shiitakeo.delete";
+    String action_renotify = "com.shiitakeo.renotify";
     String action_set_clock = "com.shiitakeo.set_clock";
     String extra_uid = "com.shiitakeo.extra_uid";
 
@@ -117,6 +119,7 @@ public class BLEService extends Service{
     long start_time;
     Boolean is_time = false;
     Boolean is_music_control = false;
+    int id_music_control = 99;
 
 
     @Override
@@ -138,6 +141,7 @@ public class BLEService extends Service{
         intent_filter.addAction(action_positive);
         intent_filter.addAction(action_negative);
         intent_filter.addAction(action_delete);
+        intent_filter.addAction(action_renotify);
         registerReceiver(message_receiver, intent_filter);
 
 
@@ -207,27 +211,35 @@ public class BLEService extends Service{
 //        Notification.Extender wearableExtender =
 //                new Notification.Extender()
 //                        .setDisplayIntent(displayPendingIntent);
+        Intent _intent_delete = new Intent();
+        _intent_delete.setAction(action_renotify);
+        PendingIntent _delete_action = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent_delete, PendingIntent.FLAG_ONE_SHOT);
 
         Notification.Builder notificationBuilder =
                 new Notification.Builder(this)
                         .setSmallIcon(R.drawable.whatsapp)
-//                        .setContentTitle("music💿")
-                        .setContentTitle("tv📺")
+                        .setContentTitle("music💿")
+//                        .setContentTitle("tv📺")
                         .setContentIntent(pendingIntent)
 //                        .extend(wearableExtender);
                 .addAction(R.drawable.stop, "Controller Open", pendingIntent)
                         .setLocalOnly(true)
                 .extend(new Notification.WearableExtender().setContentAction(0).setHintHideIcon(true))
+//                        .addAction(R.drawable.decline, "delete music controller", _delete_action)
+//                        .setLocalOnly(true)
+//                        .setDeleteIntent(_delete_action)
 //                .extend(new Notification.WearableExtender().setDisplayIntent(displayPendingIntent))
         ;
 
         Notification _notification = notificationBuilder.build();
-        _notification.flags = _notification.flags | Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+//        _notification.flags = _notification.flags | Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+        _notification.flags = _notification.flags | Notification.FLAG_ONGOING_EVENT;
+//        _notification.flags = _notification.flags | Notification.FLAG_NO_CLEAR ;
 
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 //        notificationManager.notify(notification_id, notificationBuilder.build());
-        notificationManager.notify(notification_id, _notification);
+        notificationManager.notify(id_music_control, _notification);
         notification_id++;
 
     }
@@ -266,6 +278,7 @@ public class BLEService extends Service{
         }
         bluetooth_adapter = null;
         if(notificationManager != null) {
+            notificationManager.cancel(id_music_control);
             notificationManager.cancelAll();
             notificationManager = null;
         }
@@ -386,25 +399,25 @@ public class BLEService extends Service{
                             is_connect = true;
                             //----*
 
-                            // get paired devices
-                            Set<BluetoothDevice> _paired_devices = bluetooth_adapter.getBondedDevices();
-
-                            Log.d(TAG_LOG, "for1 *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
-                            for(BluetoothDevice _paired_device: _paired_devices) {
-                                Log.d(TAG_LOG, "paired device: " + _paired_device + " :: " + _paired_device.getName());
-                                Log.d(TAG_LOG, "++ " + _paired_device.getAddress() + " :: " + _paired_device.getUuids());
-                                if(_paired_device.getAddress().toString().equals(iphone_uuid)) {
-                                    Log.d(TAG_LOG, "find 1: *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
-                                    try {
-
-                                        BluetoothSocket b_s = _paired_device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
-                                        b_s.connect();
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-
-                                }
-                            }
+//                            // get paired devices
+//                            Set<BluetoothDevice> _paired_devices = bluetooth_adapter.getBondedDevices();
+//
+//                            Log.d(TAG_LOG, "for1 *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
+//                            for(BluetoothDevice _paired_device: _paired_devices) {
+//                                Log.d(TAG_LOG, "paired device: " + _paired_device + " :: " + _paired_device.getName());
+//                                Log.d(TAG_LOG, "++ " + _paired_device.getAddress() + " :: " + _paired_device.getUuids());
+//                                if(_paired_device.getAddress().toString().equals(iphone_uuid)) {
+//                                    Log.d(TAG_LOG, "find 1: *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
+//                                    try {
+//
+//                                        BluetoothSocket b_s = _paired_device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
+//                                        b_s.connect();
+//                                    } catch (IOException e) {
+//                                        e.printStackTrace();
+//                                    }
+//
+//                                }
+//                            }
                             //----*
                             Log.d(TAG_LOG, "1: connect gatt");
                             bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
@@ -760,12 +773,19 @@ public class BLEService extends Service{
             }else if(status == BluetoothGatt.GATT_WRITE_NOT_PERMITTED) {
                 Log.d(TAG_LOG, "status: write not permitted");
                 //execute not permission animation
-                Intent intent = new Intent(getApplicationContext(), ConfirmationActivity.class);
-                intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION);
-                intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "please re-authorization paring");
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-
+//                Intent intent = new Intent(getApplicationContext(), ConfirmationActivity.class);
+//                intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION);
+//                intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "please re-authorization paring");
+//                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                startActivity(intent);
+                Method method = null;
+                try {
+                    method = gatt.getDevice().getClass().getMethod("removeBond", (Class[]) null);
+                    method.invoke(gatt.getDevice(), (Object[]) null);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                gatt.disconnect();
             }
         }
 
@@ -935,6 +955,7 @@ public class BLEService extends Service{
         }
     };
 
+    @TargetApi(20)
     public class MessageReceiver extends BroadcastReceiver{
         private static final String TAG_LOG = "BLE_wear";
         @Override
@@ -991,6 +1012,54 @@ public class BLEService extends Service{
                 }
                 Log.d(TAG_LOG, "onReceive");
             }else if(action.equals(action_set_clock)) {
+            }else if(action.equals(action_renotify)) {
+                Log.d(TAG_LOG, "action_renotify");
+                Intent _intent = new Intent(getApplicationContext(), MainActivity.class);
+                PendingIntent music_control_intent = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+
+    // この MainActivity は Wear アプリの MainActivity
+                Intent __intent = new Intent(getApplicationContext(), MusicControlActivity.class);
+                PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, __intent, 0);
+
+    // カードをタップしたときに表示される Activity
+    // ここでは ImageView 1つだけのレイアウト
+                Intent displayIntent = new Intent(getApplicationContext(), MusicControlActivity.class);
+                PendingIntent displayPendingIntent = PendingIntent.getActivity(getApplicationContext(),
+                        0, displayIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+    //        Notification.Extender wearableExtender =
+    //                new Notification.Extender()
+    //                        .setDisplayIntent(displayPendingIntent);
+                Intent _intent_delete = new Intent();
+                _intent_delete.setAction(action_renotify);
+                PendingIntent _delete_action = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent_delete, PendingIntent.FLAG_ONE_SHOT);
+
+                Notification.Builder notificationBuilder =
+                        new Notification.Builder(getApplicationContext())
+                                .setSmallIcon(R.drawable.whatsapp)
+                            .setContentTitle("music💿")
+//                                .setContentTitle("tv📺")
+                                .setContentIntent(pendingIntent)
+    //                        .extend(wearableExtender);
+                                .addAction(R.drawable.stop, "Controller Open", pendingIntent)
+//                                .setLocalOnly(true)
+                                .extend(new Notification.WearableExtender().setContentAction(0).setHintHideIcon(true))
+    //                .extend(new Notification.WearableExtender().setDisplayIntent(displayPendingIntent))
+                        //can't work.
+//                                .setDeleteIntent(_delete_action)
+                        ;
+
+                Notification _notification = notificationBuilder.build();
+//            _notification.flags = _notification.flags | Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+            _notification.flags = _notification.flags | Notification.FLAG_ONGOING_EVENT;
+//            _notification.flags = _notification.flags | Notification.FLAG_NO_CLEAR ;
+
+                NotificationManager notificationManager =
+                        (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+    //        notificationManager.notify(notification_id, notificationBuilder.build());
+                notificationManager.notify(id_music_control, _notification);
+                notification_id++;
             }
         }
     }

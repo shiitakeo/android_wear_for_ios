@@ -67,6 +67,7 @@ public class MusicControlActivity extends Activity {
     private static final String characteristics_entity_attribute = "c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7";
 
     String iphone_uuid = "";
+    Boolean is_set_entity = false;
 
 
 
@@ -139,21 +140,6 @@ public class MusicControlActivity extends Activity {
             Log.d(TAG_LOG, "start BLE scan @ BluetoothAdapter");
             bluetooth_adapter.startLeScan(le_scan_callback);
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     }
 
     public void click_next_button(View view){
@@ -319,6 +305,7 @@ public class MusicControlActivity extends Activity {
             Log.d(TAG_LOG, "onServicesDiscovered received: " + status);
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                if(!is_set_entity){
                 bluetooth_gatt = gatt;
 
                 //subscribe characteristic notification characteristic
@@ -336,6 +323,8 @@ public class MusicControlActivity extends Activity {
 //                    if ("0001".equals(characteristic.getUuid().toString())) {
                     Log.d(TAG_LOG, " set notify:: " + characteristic.getUuid());
                     bluetooth_gatt_chara = characteristic;
+
+                    request_media_info();
 //                        characteristic.setValue(new byte[]{(byte) 0x03});
 //                        gatt.writeCharacteristic(characteristic);
                     Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
@@ -352,7 +341,6 @@ public class MusicControlActivity extends Activity {
 //                                }
 //                    }
                 }
-
 
 
 //                BluetoothGattService service = gatt.getService(UUID.fromString(service_ancs));
@@ -387,8 +375,55 @@ public class MusicControlActivity extends Activity {
 //                        }
 //                    }
 //                }
+            }else {
+                try {
+                    Log.d(TAG_LOG, "-=-=-=-=- set request -=-=-==-=-=-=");
+                    BluetoothGattService service = bluetooth_gatt.getService(UUID.fromString(service_ams));
+                    if(service != null) {
+                        BluetoothGattCharacteristic chara = service.getCharacteristic(UUID.fromString(characteristics_entity_update));
+                        if(chara != null) {
+                            bluetooth_gatt.setCharacteristicNotification(chara, true);
+                            BluetoothGattDescriptor desc = chara.getDescriptor(UUID.fromString(descriptor_config));
+                            if(desc != null) {
+                                desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                                bluetooth_gatt.writeDescriptor(desc);
+                            }
+                        }
+                    }
+
+                    // onCharaWrite -> if entity-update -> chara.write(commnad);
+                    //Command trackCommand = new Command(ServicesConstants.UUID_AMS, ServicesConstants.CHARACTERISTIC_ENTITY_UPDATE, new byte[] {
+                    //        ServicesConstants.EntityIDTrack,
+                    //        ServicesConstants.TrackAttributeIDTitle,
+                    //        ServicesConstants.TrackAttributeIDArtist
+                    //});
+
+
+                    //pendingCommands.add(trackCommand);
+
+//                Command playerCommand = new Command(ServicesConstants.UUID_AMS, ServicesConstants.CHARACTERISTIC_ENTITY_UPDATE, new byte[] {
+//                        ServicesConstants.EntityIDPlayer,
+//                        ServicesConstants.PlayerAttributeIDPlaybackInfo
+//                });
+//
+//                pendingCommands.add(playerCommand);
+//
+//                sendNextCommand();
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             }
         }
+
+        private void request_media_info(){
+            is_set_entity = true;
+            bluetooth_gatt.discoverServices();
+            Log.d(TAG_LOG, "request media info");
+
+        }
+
 
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
@@ -398,6 +433,41 @@ public class MusicControlActivity extends Activity {
                 Log.d(TAG_LOG, "status: write success ");
                 //find music controll service
                 Log.d(TAG_LOG, "*+*+*+*+*+*+*+*+*+*+ find music control");
+                BluetoothGattService service = bluetooth_gatt.getService(UUID.fromString(service_ams));
+                if(service != null) {
+                    BluetoothGattCharacteristic chara = service.getCharacteristic(UUID.fromString(characteristics_entity_update));
+                    if(chara != null) {
+                        chara.setValue(new byte[]{(byte) 0x02, (byte) 0x00, (byte) 0x02});
+//                            bluetooth_gatt.readCharacteristic(chara);
+                        bluetooth_gatt.writeCharacteristic(chara);
+                    }
+
+
+                    // onCharaWrite -> if entity-update -> chara.write(commnad);
+                    //Command trackCommand = new Command(ServicesConstants.UUID_AMS, ServicesConstants.CHARACTERISTIC_ENTITY_UPDATE, new byte[] {
+                    //        ServicesConstants.EntityIDTrack,
+                    //        ServicesConstants.TrackAttributeIDTitle,
+                    //        ServicesConstants.TrackAttributeIDArtist
+                    //});
+
+
+                    //pendingCommands.add(trackCommand);
+
+//                Command playerCommand = new Command(ServicesConstants.UUID_AMS, ServicesConstants.CHARACTERISTIC_ENTITY_UPDATE, new byte[] {
+//                        ServicesConstants.EntityIDPlayer,
+//                        ServicesConstants.PlayerAttributeIDPlaybackInfo
+//                });
+                }
+            }
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt,
+                                         BluetoothGattCharacteristic characteristic,
+                                         int status) {
+            Log.d(TAG_LOG, "onCharacteristicRead:: " + status);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d(TAG_LOG, "+onCharacteristicRead:: " + status);
             }
         }
 
@@ -417,6 +487,32 @@ public class MusicControlActivity extends Activity {
 //
 //                Log.d(TAG_LOG, "notify value:: " + stringBuilder.toString());
 //                }
+
+            }
+            if (characteristics_entity_update.toString().equals(characteristic.getUuid().toString())) {
+                Log.d(TAG_LOG, "update ");
+                byte[] get_data = characteristic.getValue();
+                StringBuilder stringBuilder = new StringBuilder();
+                for (byte byteChar : get_data) {
+                    stringBuilder.append(String.format("%02X", byteChar));
+                }
+
+                Log.d(TAG_LOG, "notify value:: " + stringBuilder.toString());
+
+                String str = characteristic.getStringValue(3);
+                Log.d(TAG_LOG, "new music: " + str);
+
+            }
+            if (characteristics_entity_attribute.toString().equals(characteristic.getUuid().toString())) {
+                Log.d(TAG_LOG, "att ");
+                byte[] get_data = characteristic.getValue();
+//                if(DEBUG){
+                StringBuilder stringBuilder = new StringBuilder();
+                for (byte byteChar : get_data) {
+                    stringBuilder.append(String.format("%02X", byteChar));
+                }
+
+                Log.d(TAG_LOG, "notify value:: " + stringBuilder.toString());
 
             }
         }
