@@ -8,6 +8,14 @@ I developed this app inspired by @MohammadAG's video.
 
 Latest version
 --------------
+- v2.1(same as play store version '15/05/14)
+
+```
+1. support music control without jailbreak iPhone. (don't need my cydia app.but, my app is little better than BLE Utility.)
+2. setting time(need rooted wear device)
+3. improve reconnection seaquence
+```
+
 - v0.3(same as play store version '15/03/30)
 update
 
@@ -64,13 +72,17 @@ Getting Started
 ---------------
 [tutorial video @ Youtube.](https://www.youtube.com/watch?v=cIYe6ExIjrQ)
 
-1. Install apk to your Android wear(playstore or github).
-2. Install "Light Blue" app to your iPhone.
-3. Create virtual peripheral from "Blink" template.  
-4. Launch the app on your Android wear.
-5. Turn on "Blink" peripheral on LightBlue app.
+
+1. Install "BLE Utility" app to your iPhone.
+2. Open Peripheral tab. don't need creating peripherals.
+3. Launch the app on your Android wear.
+4. Turn on "Blink" peripheral on LightBlue app.
+5. after 10sec, enter pin code.
 6. If success connect to iphone, success animation is played.
-7. Push wear's crown to back home screen. **Don't swipe Activity.**  
+7. Push wear's crown to back home screen. Don't swipe Activity.
+※ if do not success(arrive cloud icon or stoppeted notification), please try restart app, Bluetooth off/on, remove paring bluetooth.
+8. tap "music" notification, you can control music app in iPhone.
+9. If your wear is getting rooted device, your wear's is automatically setting time.
 
 apk install
 ---------
