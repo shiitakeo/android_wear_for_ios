@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity"
+    android:background="#ecf0f1"
+    tools:deviceIds="wear_square">
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/volume_up"
+        android:background="@null"
+        android:onClick="click_volume_up_button"
+        android:src="@drawable/vol_up_state"
+        android:layout_marginBottom="24dp"
+        android:layout_alignParentBottom="true"
+        android:layout_toEndOf="@+id/start_stop" />
+
+    android:layout_marginBottom="22dp" />
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/volume_down"
+        android:background="@null"
+        android:onClick="click_volume_down_button"
+        android:src="@drawable/vol_down_state"
+        android:layout_alignTop="@+id/volume_up"
+        android:layout_toStartOf="@+id/start_stop" />
+
+    android:layout_marginTop="27dp" />
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/previous"
+        android:background="@null"
+        android:src="@drawable/prev_state"
+        android:onClick="click_previous_button"
+        android:layout_alignTop="@+id/start_stop"
+        android:layout_toStartOf="@+id/text_artist" />
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/start_stop"
+        android:src="@drawable/resume_state"
+        android:background="@null"
+        android:onClick="click_stop_button"
+        android:layout_above="@+id/volume_down"
+        android:layout_centerHorizontal="true" />
+
+    android:layout_alignStart="@+id/textView3" />
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/next"
+        android:background="@null"
+        android:src="@drawable/next_state"
+        android:onClick="click_next_button"
+        android:layout_alignTop="@+id/start_stop"
+        android:layout_toEndOf="@+id/volume_up" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Large Text"
+        android:id="@+id/text_title"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:textColor="#2c3e50"
+        android:layout_marginTop="29dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Medium Text"
+        android:id="@+id/text_artist"
+        android:layout_below="@+id/text_title"
+        android:textColor="#7f8c8d"
+        android:layout_centerHorizontal="true" /><![CDATA[
+
+
+
+    android:layout_marginStart="19dp" />
+
+]]>
+</RelativeLayout>

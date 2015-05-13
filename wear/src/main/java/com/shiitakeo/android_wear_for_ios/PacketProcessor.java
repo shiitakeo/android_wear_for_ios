@@ -20,6 +20,8 @@ public class PacketProcessor {
     private int remain_packet_size;
     private int remain_next_packet_byte;
 
+    private byte[] uid = new byte[4];
+
     private enum ds_notification_processing_status{
         init, app_id, title, message, finish
     };
@@ -49,6 +51,12 @@ public class PacketProcessor {
             if(processing_status.equals(processing_status.init)){
                 //parse first packet include type, uid, app id length/value
 //                        att1_id, length
+
+                uid[0] = get_data[1];
+                uid[1] = get_data[2];
+                uid[2] = get_data[3];
+                uid[3] = get_data[4];
+
                 index_att_id = 5;
 
                 //get att0's length
@@ -157,6 +165,10 @@ public class PacketProcessor {
 
     public Boolean is_finish_processing(){
         return processing_status.equals(processing_status.finish);
+    }
+
+    public byte[] get_uid(){
+        return uid;
     }
 
     private int get_attribute_length(byte[] _get_data, int _index_att){
