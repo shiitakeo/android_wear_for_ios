@@ -52,6 +52,7 @@ import java.util.UUID;
  * Created by shiitakeo on 15/03/15.
  */
 public class BLEService extends Service{
+    // BluetoothLeScanner does not work properly in my environment...
 //    private int api_level = Build.VERSION.SDK_INT;
     private int api_level = 20;
 
@@ -69,12 +70,6 @@ public class BLEService extends Service{
 
     private static final String descriptor_config = "00002902-0000-1000-8000-00805f9b34fb";
     private static final String service_blank = "00001111-0000-1000-8000-00805f9b34fb";
-
-    //AMS Profile
-    private static final String service_ams = "89d3502b-0f36-433a-8ef4-c502ad55f8dc";
-    private static final String characteristics_remote_command = "9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2";
-    private static final String characteristics_entity_update = "2f7cabce-808d-411f-9a0c-bb92ba96c102";
-    private static final String characteristics_entity_attribute = "c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7";
 
     //CTS Profile
     private static final String service_cts = "00001805-0000-1000-8000-00805f9b34fb";
@@ -112,13 +107,13 @@ public class BLEService extends Service{
 
     private static final long screen_time_out = 1000;
     private Boolean is_reconnect = false;
-    private int skip_count = 0;
     BLEScanCallback scan_callback = new BLEScanCallback();
     String iphone_uuid;
+    private int skip_count = 0;
 
     long start_time;
     Boolean is_time = false;
-    Boolean is_music_control = false;
+    //notification id
     int id_music_control = 99;
 
 
@@ -143,9 +138,6 @@ public class BLEService extends Service{
         intent_filter.addAction(action_delete);
         intent_filter.addAction(action_renotify);
         registerReceiver(message_receiver, intent_filter);
-
-
-
 
         vib = (Vibrator)getSystemService(VIBRATOR_SERVICE);
         notificationManager = NotificationManagerCompat.from(getApplicationContext());
@@ -194,23 +186,10 @@ public class BLEService extends Service{
         }
 
 
-        Intent _intent = new Intent(getApplicationContext(), MainActivity.class);
-        PendingIntent music_control_intent = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent, PendingIntent.FLAG_CANCEL_CURRENT);
-
-
-// この MainActivity は Wear アプリの MainActivity
+        //music control notification
         Intent __intent = new Intent(this, MusicControlActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, __intent, 0);
 
-// カードをタップしたときに表示される Activity
-// ここでは ImageView 1つだけのレイアウト
-        Intent displayIntent = new Intent(this, MusicControlActivity.class);
-        PendingIntent displayPendingIntent = PendingIntent.getActivity(this,
-                0, displayIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-//        Notification.Extender wearableExtender =
-//                new Notification.Extender()
-//                        .setDisplayIntent(displayPendingIntent);
         Intent _intent_delete = new Intent();
         _intent_delete.setAction(action_renotify);
         PendingIntent _delete_action = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent_delete, PendingIntent.FLAG_ONE_SHOT);
@@ -219,29 +198,22 @@ public class BLEService extends Service{
                 new Notification.Builder(this)
                         .setSmallIcon(R.drawable.whatsapp)
                         .setContentTitle("music💿")
-//                        .setContentTitle("tv📺")
                         .setContentIntent(pendingIntent)
-//                        .extend(wearableExtender);
-                .addAction(R.drawable.resume, "Controller Open", pendingIntent)
+                        .addAction(R.drawable.resume, "Controller Open", pendingIntent)
                         .setLocalOnly(true)
-                .extend(new Notification.WearableExtender().setContentAction(0).setHintHideIcon(true))
-//                        .addAction(R.drawable.decline, "delete music controller", _delete_action)
-//                        .setLocalOnly(true)
-//                        .setDeleteIntent(_delete_action)
-//                .extend(new Notification.WearableExtender().setDisplayIntent(displayPendingIntent))
-        ;
+//                        .setPriority(Notification.PRIORITY_MIN)
+//                        .setPriority(-100)
+                        .setDeleteIntent(_delete_action)
+                        .extend(new Notification.WearableExtender().setContentAction(0).setHintHideIcon(true))
+                ;
 
         Notification _notification = notificationBuilder.build();
-//        _notification.flags = _notification.flags | Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
-        _notification.flags = _notification.flags | Notification.FLAG_ONGOING_EVENT;
-//        _notification.flags = _notification.flags | Notification.FLAG_NO_CLEAR ;
+//        _notification.flags = _notification.flags | Notification.FLAG_ONGOING_EVENT;
 
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-//        notificationManager.notify(notification_id, notificationBuilder.build());
         notificationManager.notify(id_music_control, _notification);
         notification_id++;
-
     }
 
     @TargetApi(21)
@@ -299,19 +271,13 @@ public class BLEService extends Service{
         return list;
     }
 
-
-//    ScanCallback scan_callback = new ScanCallback() {
-
     @TargetApi(21)
     private class BLEScanCallback extends ScanCallback {
         @Override
         public void onScanResult(int callbackType, android.bluetooth.le.ScanResult result) {
             Log.d(TAG_LOG, "scan result" + result.toString());
-//            Log.d(TAG_LOG, "device address" + result.getDevice().getAddress());
-//            Log.d(TAG_LOG, "iphone address" + iphone_uuid);
-//            Log.d(TAG_LOG, skip_count + "judge: " + result.getDevice().getAddress().toString().equals(iphone_uuid));
-            BluetoothDevice device = result.getDevice();
 
+            BluetoothDevice device = result.getDevice();
 
             if (!is_connect) {
                 Log.d(TAG_LOG, "is connect");
@@ -325,8 +291,6 @@ public class BLEService extends Service{
                             is_connect = true;
                             bluetooth_gatt = result.getDevice().connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
                         }
-//                    } else if (is_reconnect && skip_count > 5 && device.getName() != null) {
-//                    } else if (is_reconnect && skip_count > 5 && device.getAddress().toString().equals(iphone_uuid)) {
                     } else if (is_reconnect && device.getAddress().toString().equals(iphone_uuid)) {
                         if(!is_time) {
                             Log.d(TAG_LOG, "-=-=-=-=-=-=-=-=-=- timer start:: -=-==-=-=-=-=-=-==--=-=-=-==-=-=-=-=-=-=-=-");
@@ -337,7 +301,6 @@ public class BLEService extends Service{
                             is_connect = true;
                             is_reconnect = false;
                             bluetooth_gatt = device.connectGatt(getApplicationContext(), true, bluetooth_gattCallback);
-//                            bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
                         }
                     } else {
                         Log.d(TAG_LOG, "skip:: ");
@@ -345,9 +308,7 @@ public class BLEService extends Service{
                     }
                 }
             }
-        }
-
-        ;
+        };
 
         @Override
         public void onBatchScanResults(List<ScanResult> results) {
@@ -366,25 +327,6 @@ public class BLEService extends Service{
         @Override
         public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
             Log.i(TAG_LOG, "onLeScan");
-//            if(!is_connect) {
-//                Log.d(TAG_LOG, "is connect");
-//                if (device != null) {
-//                    Log.d(TAG_LOG, "device ");
-//                    if (!is_reconnect && device.getName() != null) {
-//                        Log.d(TAG_LOG, "getname ");
-//                        is_connect = true;
-//                        bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
-//                    }else if(is_reconnect && skip_count > 5 && device.getName() != null){
-//                        Log.d(TAG_LOG, "reconnect:: ");
-//                        is_connect = true;
-//                        is_reconnect = false;
-//                        bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
-//                    }else {
-//                        Log.d(TAG_LOG, "skip:: ");
-//                        skip_count++;
-//                    }
-//                }
-//            }
 
             if (!is_connect) {
                 Log.d(TAG_LOG, "is connect");
@@ -397,34 +339,8 @@ public class BLEService extends Service{
                             iphone_uuid = device.getAddress().toString();
                             Log.d(TAG_LOG, "iphone_uuid: " + iphone_uuid);
                             is_connect = true;
-                            //----*
-
-//                            // get paired devices
-//                            Set<BluetoothDevice> _paired_devices = bluetooth_adapter.getBondedDevices();
-//
-//                            Log.d(TAG_LOG, "for1 *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
-//                            for(BluetoothDevice _paired_device: _paired_devices) {
-//                                Log.d(TAG_LOG, "paired device: " + _paired_device + " :: " + _paired_device.getName());
-//                                Log.d(TAG_LOG, "++ " + _paired_device.getAddress() + " :: " + _paired_device.getUuids());
-//                                if(_paired_device.getAddress().toString().equals(iphone_uuid)) {
-//                                    Log.d(TAG_LOG, "find 1: *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
-//                                    try {
-//
-//                                        BluetoothSocket b_s = _paired_device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
-//                                        b_s.connect();
-//                                    } catch (IOException e) {
-//                                        e.printStackTrace();
-//                                    }
-//
-//                                }
-//                            }
-                            //----*
-                            Log.d(TAG_LOG, "1: connect gatt");
                             bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
                         }
-
-//                    } else if (is_reconnect && skip_count > 5 && device.getName() != null) {
-//                    } else if (is_reconnect && skip_count > 5 && device.getAddress().toString().equals(iphone_uuid)) {
                     } else if (is_reconnect && device.getAddress().toString().equals(iphone_uuid)) {
                         if(!is_time) {
                             Log.d(TAG_LOG, "-=-=-=-=-=-=-=-=-=- timer start:: -=-==-=-=-=-=-=-==--=-=-=-==-=-=-=-=-=-=-=-");
@@ -434,30 +350,25 @@ public class BLEService extends Service{
                             Log.d(TAG_LOG, "-=-=-=-=-=-=-=-=-=- reconnect:: -=-==-=-=-=-=-=-==--=-=-=-==-=-=-=-=-=-=-=-");
                             is_connect = true;
                             is_reconnect = false;
-                            //----*
 
                             // get paired devices
                             Set<BluetoothDevice> _paired_devices = bluetooth_adapter.getBondedDevices();
 
-                            Log.d(TAG_LOG, "for1 *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
                             for(BluetoothDevice _paired_device: _paired_devices) {
                                 Log.d(TAG_LOG, "paired device: " + _paired_device + " :: " + _paired_device.getName());
                                 Log.d(TAG_LOG, "++ " + _paired_device.getAddress() + " :: " + _paired_device.getUuids());
                                 if(_paired_device.getAddress().toString().equals(iphone_uuid)) {
-                                    Log.d(TAG_LOG, "find 1: *=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
+                                    Log.d(TAG_LOG, "*=*=8=*+*+8=8+*+8=*+*+*=8+*+*8+*+*=*+*+*=8+*+*+8+*+*+*=*+8=*+8+*+8=8+*=");
                                     try {
-
-                                        BluetoothSocket b_s = _paired_device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
-                                        b_s.connect();
+                                        BluetoothSocket bluetooth_socket = _paired_device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
+                                        bluetooth_socket.connect();
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
 
                                 }
                             }
-                            //----*
                             Log.d(TAG_LOG, "connect gatt");
-//                            bluetooth_gatt = device.connectGatt(getApplicationContext(), true, bluetooth_gattCallback);
                             bluetooth_gatt = device.connectGatt(getApplicationContext(), false, bluetooth_gattCallback);
                         }
                     } else {
@@ -466,8 +377,6 @@ public class BLEService extends Service{
                     }
                 }
             }
-
-
         }
     };
 
@@ -514,7 +423,6 @@ public class BLEService extends Service{
                     return;
                 }
 
-
                 is_reconnect = true;
                 Log.d(TAG_LOG, "start BLE scan");
                 if(api_level >= 21) {
@@ -522,31 +430,6 @@ public class BLEService extends Service{
                 }else {
                     bluetooth_adapter.startLeScan(le_scan_callback);
                 }
-
-                //execute success animation
-//                Intent intent = new Intent(getApplicationContext(), ConfirmationActivity.class);
-//                intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION);
-//                intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "airplane mode on -> off, after restart app.");
-//                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                startActivity(intent);
-
-
-//                Intent _intent = new Intent(Intent.ACTION_MAIN);
-//                intent.addCategory(Intent.CATEGORY_HOME);
-//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-//                        | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-//                startActivity(_intent);
-
-
-
-
-                // time intent
-                // intent -> connect gatt -> discover time service -> read time service chara
-                //
-                Intent _intent_set_clock = new Intent();
-                _intent_set_clock.setAction(action_set_clock);
-                PendingIntent _set_clock_action = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent_set_clock, PendingIntent.FLAG_CANCEL_CURRENT);
-                notification_id++;
             }
         }
 
@@ -586,26 +469,6 @@ public class BLEService extends Service{
                         }
                     }
                 }
-                // get current time
-//                Log.d(TAG_LOG, "get time+_=-=_=-+-+-+-=_=_=_+-=-=-=-=");
-//                BluetoothGattService _service = gatt.getService(UUID.fromString(service_cts));
-//                if (_service == null) {
-//                    Log.d(TAG_LOG, "cant find service");
-//                } else {
-//                    Log.d(TAG_LOG, "find service");
-//                    Log.d(TAG_LOG, String.valueOf(bluetooth_gatt.getServices()));
-//
-//                    // subscribe data source characteristic
-//                    BluetoothGattCharacteristic data_characteristic = _service.getCharacteristic(UUID.fromString(characteristics_current_time));
-//
-//                    if (data_characteristic == null) {
-//                        Log.d(TAG_LOG, "cant find data source chara");
-//                    } else {
-//                        Log.d(TAG_LOG, "find data source chara :: " + data_characteristic.getUuid());
-//
-//
-//                    }
-//                }
             }
         }
 
@@ -615,6 +478,9 @@ public class BLEService extends Service{
                                          int status) {
             Log.d(TAG_LOG, "onCharacteristicRead:: " + status);
             if (status == BluetoothGatt.GATT_SUCCESS) {
+
+                //set current time
+                //need rooted wear device
                 Log.d(TAG_LOG, "8=8==8=8=8=8===8=8=8=8=8=8==8=8=8=8=8==88=8=8=8=");
                 String month_prefix = "";
                 String day_prefix = "";
@@ -625,46 +491,46 @@ public class BLEService extends Service{
                 int year = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT16, 0);
                 Log.d(TAG_LOG, "year:: " + year);
 
-                int month  = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 2);
-                if(month < 10) {
+                int month = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 2);
+                if (month < 10) {
                     month_prefix = new String("0" + month);
                     Log.d(TAG_LOG, "month_pre:: " + month_prefix);
-                }else {
+                } else {
                     month_prefix = String.valueOf(month);
                     Log.d(TAG_LOG, "month_pre:: " + month_prefix);
                 }
 
                 int day = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 3);
-                if(day < 10) {
+                if (day < 10) {
                     day_prefix = new String("0" + day);
                     Log.d(TAG_LOG, "day_pre:: " + day_prefix);
-                }else {
+                } else {
                     day_prefix = String.valueOf(day);
                     Log.d(TAG_LOG, "day_pre:: " + day_prefix);
                 }
                 int hour = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 4);
-                if(hour < 10) {
+                if (hour < 10) {
                     hour_prefix = new String("0" + hour);
                     Log.d(TAG_LOG, "hour_pre:: " + hour_prefix);
-                }else {
+                } else {
                     hour_prefix = String.valueOf(hour);
                     Log.d(TAG_LOG, "hour_pre:: " + hour_prefix);
                 }
 
                 int min = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 5);
-                if(min < 10) {
+                if (min < 10) {
                     min_prefix = new String("0" + min);
                     Log.d(TAG_LOG, "min_pre:: " + min_prefix);
-                }else {
+                } else {
                     min_prefix = String.valueOf(min);
                     Log.d(TAG_LOG, "min_pre:: " + min_prefix);
                 }
 
                 int sec = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT8, 6);
-                if(sec < 10) {
+                if (sec < 10) {
                     sec_prefix = new String("0" + sec);
                     Log.d(TAG_LOG, "sec_pre:: " + sec_prefix);
-                }else {
+                } else {
                     sec_prefix = String.valueOf(sec);
                     Log.d(TAG_LOG, "sec_pre:: " + sec_prefix);
                 }
@@ -741,52 +607,11 @@ public class BLEService extends Service{
                             gatt.readCharacteristic(data_characteristic);
                         }
                     }
-
-
-//                    //find music controll service
-//                    if(!is_music_control) {
-//                        Log.d(TAG_LOG, "*+*+*+*+*+*+*+*+*+*+ find music control");
-//                        //subscribe characteristic notification characteristic
-//                        BluetoothGattService service = gatt.getService(UUID.fromString(service_blank));
-//                        Log.d(TAG_LOG, " ** find service :: " + service.getUuid());
-//                        List <BluetoothGattCharacteristic> chs = service.getCharacteristics();
-//                        for(BluetoothGattCharacteristic ch: chs) {
-//                            Log.d(TAG_LOG, "ch: " + ch);
-//                        }
-//                        BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("00001111-0001-1000-8000-00805f9b34fb"));
-//
-//                        if (characteristic == null) {
-//                            Log.d(TAG_LOG, " cant find chara");
-//                        } else {
-//                            Log.d(TAG_LOG, " ** find chara :: " + characteristic.getUuid());
-//                            if ("0001".equals(characteristic.getUuid().toString())) {
-//                                Log.d(TAG_LOG, " set notify:: " + characteristic.getUuid());
-//                                characteristic.setValue(new byte[] { (byte) 0x03 });
-//                                gatt.writeCharacteristic(characteristic);
-//                                Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
-////                                bluetooth_gatt.setCharacteristicNotification(characteristic, true);
-////                                BluetoothGattDescriptor notify_descriptor = characteristic.getDescriptor(
-////                                        UUID.fromString(descriptor_config));
-////                                if (descriptor == null) {
-////                                    Log.d(TAG_LOG, " ** not find desc :: " + notify_descriptor.getUuid());
-////                                } else {
-////                                    Log.d(TAG_LOG, " ** find desc :: " + notify_descriptor.getUuid());
-////                                    notify_descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-////                                    bluetooth_gatt.writeDescriptor(notify_descriptor);
-////                                    is_subscribed_characteristics = true;
-////                                }
-//                            }
-//                        }
-//                    }
                 }
             }else if(status == BluetoothGatt.GATT_WRITE_NOT_PERMITTED) {
                 Log.d(TAG_LOG, "status: write not permitted");
-                //execute not permission animation
-//                Intent intent = new Intent(getApplicationContext(), ConfirmationActivity.class);
-//                intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION);
-//                intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "please re-authorization paring");
-//                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                startActivity(intent);
+
+                //remove authrization
                 Method method = null;
                 try {
                     method = gatt.getDevice().getClass().getMethod("removeBond", (Class[]) null);
@@ -830,7 +655,6 @@ public class BLEService extends Service{
                     return;
                 }
 
-
                 is_reconnect = true;
                 Log.d(TAG_LOG, "start BLE scan");
                 if(api_level >= 21) {
@@ -838,20 +662,6 @@ public class BLEService extends Service{
                 }else {
                     bluetooth_adapter.startLeScan(le_scan_callback);
                 }
-
-                //execute success animation
-//                Intent intent = new Intent(getApplicationContext(), ConfirmationActivity.class);
-//                intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION);
-//                intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "airplane mode on -> off, after restart app.");
-//                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                startActivity(intent);
-
-
-//                Intent _intent = new Intent(Intent.ACTION_MAIN);
-//                intent.addCategory(Intent.CATEGORY_HOME);
-//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-//                        | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-//                startActivity(_intent);
             }
         }
 
@@ -909,6 +719,7 @@ public class BLEService extends Service{
                             .addAction(R.drawable.ic_accept, "Accept", _positive_action)
                             .addAction(R.drawable.ic_decline, "Decline", _negative_action)
                             .setDeleteIntent(_delete_action)
+                            .setPriority(Notification.PRIORITY_HIGH)
                             .build();
                     //
                     //notification_id => mediaとかREGULARで固定してる
@@ -924,28 +735,6 @@ public class BLEService extends Service{
                         Log.d(TAG_LOG, "acquire()");
                         wake_lock.acquire(screen_time_out);
                     }
-
-
-
-                    // get current time
-//                    Log.d(TAG_LOG, ":get time+_=-=_=-+-+-+-=_=_=_+-=-=-=-=");
-//                    BluetoothGattService _service = gatt.getService(UUID.fromString(service_cts));
-//                    if (_service == null) {
-//                        Log.d(TAG_LOG, "cant find service");
-//                    } else {
-//                        Log.d(TAG_LOG, "find service");
-//                        Log.d(TAG_LOG, String.valueOf(bluetooth_gatt.getServices()));
-//
-//                        // subscribe data source characteristic
-//                        BluetoothGattCharacteristic data_characteristic = _service.getCharacteristic(UUID.fromString(characteristics_current_time));
-//
-//                        if (data_characteristic == null) {
-//                            Log.d(TAG_LOG, "cant find data source chara");
-//                        } else {
-//                            Log.d(TAG_LOG, "find data source chara :: " + data_characteristic.getUuid());
-//                            gatt.readCharacteristic(data_characteristic);
-//                        }
-//                    }
                 }
             }
 
@@ -958,24 +747,6 @@ public class BLEService extends Service{
 
                 byte[] data = characteristic.getValue();
                 if(data != null && data.length > 0) {
-//                    if(DEBUG) {
-//                        Log.d(TAG_LOG, "*******");
-//                        String type = String.format("%02X", data[0]);
-//                        Log.d(TAG_LOG, "type: " + type);
-//                        String priority = String.format("%02X", data[1]);
-//                        Log.d(TAG_LOG, "priority: " + priority);
-//                        String category = String.format("%02X", data[2]);
-//                        Log.d(TAG_LOG, "category: " + category);
-//                        String count = String.format("%02X", data[3]);
-//                        Log.d(TAG_LOG, "category count: " + count);
-//
-//                        StringBuilder stringBuilder = new StringBuilder();
-//                        for(byte byteChar: data){
-//                            stringBuilder.append(String.format("%02X", byteChar));
-//                        }
-//                        Log.d(TAG_LOG, "notify value:: " + stringBuilder.toString());
-//                    }
-
                     try {
                         if (String.format("%02X", data[0]).equals("00")) {
                             Log.d(TAG_LOG, "get notify");
@@ -1031,7 +802,7 @@ public class BLEService extends Service{
 
             // perform notification action: immediately
             // delete intent: after 7~8sec.
-        if (action.equals(action_positive) | action.equals(action_negative) | action.equals(action_delete)){
+            if (action.equals(action_positive) | action.equals(action_negative) | action.equals(action_delete)){
                 Log.d(TAG_LOG, "get action: " + action);
 
                 //get notification uid
@@ -1080,23 +851,12 @@ public class BLEService extends Service{
             }else if(action.equals(action_set_clock)) {
             }else if(action.equals(action_renotify)) {
                 Log.d(TAG_LOG, "action_renotify");
-                Intent _intent = new Intent(getApplicationContext(), MainActivity.class);
-                PendingIntent music_control_intent = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
 
-    // この MainActivity は Wear アプリの MainActivity
+                //music control notification
                 Intent __intent = new Intent(getApplicationContext(), MusicControlActivity.class);
                 PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, __intent, 0);
 
-    // カードをタップしたときに表示される Activity
-    // ここでは ImageView 1つだけのレイアウト
-                Intent displayIntent = new Intent(getApplicationContext(), MusicControlActivity.class);
-                PendingIntent displayPendingIntent = PendingIntent.getActivity(getApplicationContext(),
-                        0, displayIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-    //        Notification.Extender wearableExtender =
-    //                new Notification.Extender()
-    //                        .setDisplayIntent(displayPendingIntent);
                 Intent _intent_delete = new Intent();
                 _intent_delete.setAction(action_renotify);
                 PendingIntent _delete_action = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent_delete, PendingIntent.FLAG_ONE_SHOT);
@@ -1104,26 +864,20 @@ public class BLEService extends Service{
                 Notification.Builder notificationBuilder =
                         new Notification.Builder(getApplicationContext())
                                 .setSmallIcon(R.drawable.whatsapp)
-                            .setContentTitle("music 💿")
-//                                .setContentTitle("tv📺")
+                                .setContentTitle("music💿")
                                 .setContentIntent(pendingIntent)
-    //                        .extend(wearableExtender);
                                 .addAction(R.drawable.resume, "Controller Open", pendingIntent)
-//                                .setLocalOnly(true)
+                                .setLocalOnly(true)
+                                .setPriority(Notification.PRIORITY_MIN)
+                                .setDeleteIntent(_delete_action)
                                 .extend(new Notification.WearableExtender().setContentAction(0).setHintHideIcon(true))
-    //                .extend(new Notification.WearableExtender().setDisplayIntent(displayPendingIntent))
-                        //can't work.
-//                                .setDeleteIntent(_delete_action)
                         ;
 
                 Notification _notification = notificationBuilder.build();
-//            _notification.flags = _notification.flags | Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
-            _notification.flags = _notification.flags | Notification.FLAG_ONGOING_EVENT;
-//            _notification.flags = _notification.flags | Notification.FLAG_NO_CLEAR ;
+//        _notification.flags = _notification.flags | Notification.FLAG_ONGOING_EVENT;
 
                 NotificationManager notificationManager =
                         (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-    //        notificationManager.notify(notification_id, notificationBuilder.build());
                 notificationManager.notify(id_music_control, _notification);
                 notification_id++;
             }

@@ -40,7 +40,7 @@ android:layout_marginTop="27dp" />
     android:src="@drawable/prev_state"
     android:onClick="click_previous_button"
     android:layout_alignTop="@+id/start_stop"
-    android:layout_toStartOf="@+id/text_artist" />
+    android:layout_toStartOf="@+id/volume_down" />
 
 <ImageButton
     android:layout_width="wrap_content"

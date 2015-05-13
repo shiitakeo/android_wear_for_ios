@@ -43,6 +43,10 @@ import android.widget.TextView;
  * Created by shiitakeo on 15/04/03.
  */
 public class MusicControlActivity extends Activity {
+    private static final String TAG_LOG = "BLE_wear";
+
+    // BluetoothLeScanner does not work properly in my environment...
+//    private int api_level = Build.VERSION.SDK_INT;
     private int api_level = 20;
 
     private BluetoothLeScanner le_scanner;
@@ -51,35 +55,20 @@ public class MusicControlActivity extends Activity {
     private BluetoothGattCharacteristic bluetooth_gatt_chara;
     private static Boolean is_connect = false;
 
-
-    private static final String TAG_LOG = "BLE_wear";
-    //ANCS Profile
-    private static final String service_ancs = "7905f431-b5ce-4e99-a40f-4b1e122d00d0";
-    private static final String characteristics_notification_source = "9fbf120d-6301-42d9-8c58-25e699a21dbd";
-    private static final String characteristics_data_source =         "22eac6e9-24d6-4bb5-be44-b36ace7c7bfb";
-    private static final String characteristics_control_point =       "69d1d8f3-45e1-49a8-9821-9bbdfdaad9d9";
-
-    private static final String descriptor_config = "00002902-0000-1000-8000-00805f9b34fb";
-    private static final String service_blank = "00001111-0000-1000-8000-00805f9b34fb";
-
-
-    //ams
+    //ams Profile
     private static final String service_ams = "89d3502b-0f36-433a-8ef4-c502ad55f8dc";
     private static final String characteristics_remote_command = "9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2";
     private static final String characteristics_entity_update = "2f7cabce-808d-411f-9a0c-bb92ba96c102";
-    private static final String characteristics_entity_attribute = "c6b2f38c-23ab-46d8-a6ab-a3a870bbd5d7";
+    private static final String descriptor_config = "00002902-0000-1000-8000-00805f9b34fb";
 
     String iphone_uuid = "";
     Boolean is_set_entity = false;
     private BroadcastReceiver message_receiver = new MessageReceiver();
 
     // intent action
-    String action_positive = "com.shiitakeo.pos";
-    String action_negative = "com.shiitakeo.neg";
-    String action_delete = "com.shiitakeo.del";
-    String action_renotify = "com.shiitakeo.ren";
-    String action_set_clock = "com.shiitakeo.set_clock";
-    String extra_uid = "com.shiitakeo.extra_uid";
+    String set_artist_info = "com.shiitakeo.set_artist";
+    String set_title_info = "com.shiitakeo.set_title";
+    String extra_data = "com.shiitakeo.extra_data";
 
 
 
@@ -88,38 +77,11 @@ public class MusicControlActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music_control);
 
-        Log.d(TAG_LOG, "-=-=-=-=-=-=-=-= onCreate -=-=-=-=-=-=-=-=-=");
+        Log.d(TAG_LOG, "-=-=-=-=-=-=-=-= onCreate @ MusicControlActivity -=-=-=-=-=-=-=-=-=");
         IntentFilter intent_filter = new IntentFilter();
-        intent_filter.addAction(action_positive);
-        intent_filter.addAction(action_negative);
-        intent_filter.addAction(action_delete);
-        intent_filter.addAction(action_renotify);
+        intent_filter.addAction(set_artist_info);
+        intent_filter.addAction(set_title_info);
         registerReceiver(message_receiver, intent_filter);
-
-
-//        //イメージボタンの取得
-//        ImageButton imageBtn=(ImageButton)findViewById(R.id.volume_down);
-//        imageBtn.setOnClickListener(new OnClickListener() {
-//            //クリック時のイベント処理
-//            @Override
-//            public void onClick(View view) {
-//                bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x03});
-//                bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
-//                Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
-//            }
-//        });
-//
-//        ImageButton button_prev =(ImageButton)findViewById(R.id.previous);
-//        button_prev.setOnClickListener(new OnClickListener() {
-//            //クリック時のイベント処理
-//            @Override
-//            public void onClick(View view) {
-//                bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x04});
-//                bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
-//                Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
-//            }
-//        });
-
 
         if(bluetooth_gatt != null) {
             bluetooth_gatt.disconnect();
@@ -161,42 +123,42 @@ public class MusicControlActivity extends Activity {
     }
 
     public void click_next_button(View view){
+        Log.d(TAG_LOG, "-=-=-=-=-= next song -=-==-");
         bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x03});
         bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
-        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
 
     }
 
     public void click_previous_button(View view){
+        Log.d(TAG_LOG, "-=-=-=-=-= previous song -=-==-");
         bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x04});
         bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
-        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
 
     }
     public void click_start_button(View view){
+        Log.d(TAG_LOG, "-=-=-=-=-= start -=-==-");
         bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x01});
         bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
-        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
 
     }
 
     public void click_stop_button(View view){
+        Log.d(TAG_LOG, "-=-=-=-=-= stop -=-==-");
         bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x02});
         bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
-        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
 
     }
     public void click_volume_up_button(View view){
+        Log.d(TAG_LOG, "-=-=-=-=-= volume up -=-==-");
         bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x05});
         bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
-        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
 
     }
 
     public void click_volume_down_button(View view){
+        Log.d(TAG_LOG, "-=-=-=-=-= volume down -=-==-");
         bluetooth_gatt_chara.setValue(new byte[]{(byte) 0x06});
         bluetooth_gatt.writeCharacteristic(bluetooth_gatt_chara);
-        Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
 
     }
 
@@ -216,7 +178,7 @@ public class MusicControlActivity extends Activity {
 
     @Override
     public void onDestroy() {
-        Log.d(TAG_LOG, "~~~~~~~~ service onDestroy");
+        Log.d(TAG_LOG, "~~~~~~~~ onDestroy @ Music Control Acitivity");
         if(api_level >= 21) {
             stop_le_scanner();
         }else {
@@ -242,7 +204,7 @@ public class MusicControlActivity extends Activity {
     @TargetApi(21)
     private List<ScanFilter> create_scan_filter(){
 //        ScanFilter filter = new ScanFilter.Builder().setServiceUuid(ParcelUuid.fromString(service_ancs)).build();
-        ScanFilter filter = new ScanFilter.Builder().setServiceUuid(ParcelUuid.fromString(service_blank)).build();
+        ScanFilter filter = new ScanFilter.Builder().setServiceUuid(ParcelUuid.fromString(service_ams)).build();
         List<ScanFilter> list = new ArrayList<ScanFilter>(1);
         list.add(filter);
         return list;
@@ -326,10 +288,6 @@ public class MusicControlActivity extends Activity {
                 if(!is_set_entity){
                 bluetooth_gatt = gatt;
 
-                //subscribe characteristic notification characteristic
-                //for my app
-//                BluetoothGattService service = gatt.getService(UUID.fromString(service_blank));
-//                BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString("00001111-0001-1000-8000-00805f9b34fb"));
                 // for ams
                 BluetoothGattService service = gatt.getService(UUID.fromString(service_ams));
                 BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(characteristics_remote_command));
@@ -343,56 +301,7 @@ public class MusicControlActivity extends Activity {
                     bluetooth_gatt_chara = characteristic;
 
                     request_media_info();
-//                        characteristic.setValue(new byte[]{(byte) 0x03});
-//                        gatt.writeCharacteristic(characteristic);
-                    Log.d(TAG_LOG, "-=-=-=-=-= finish write data-=-==-");
-//                                bluetooth_gatt.setCharacteristicNotification(characteristic, true);
-//                                BluetoothGattDescriptor notify_descriptor = characteristic.getDescriptor(
-//                                        UUID.fromString(descriptor_config));
-//                                if (descriptor == null) {
-//                                    Log.d(TAG_LOG, " ** not find desc :: " + notify_descriptor.getUuid());
-//                                } else {
-//                                    Log.d(TAG_LOG, " ** find desc :: " + notify_descriptor.getUuid());
-//                                    notify_descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-//                                    bluetooth_gatt.writeDescriptor(notify_descriptor);
-//                                    is_subscribed_characteristics = true;
-//                                }
-//                    }
                 }
-
-
-//                BluetoothGattService service = gatt.getService(UUID.fromString(service_ancs));
-//                if (service == null) {
-//                    Log.d(TAG_LOG, "cant find service");
-//                } else {
-//                    Log.d(TAG_LOG, "find service");
-//                    Log.d(TAG_LOG, String.valueOf(bluetooth_gatt.getServices()));
-//
-//                    // subscribe data source characteristic
-//                    BluetoothGattCharacteristic data_characteristic = service.getCharacteristic(UUID.fromString(characteristics_data_source));
-//
-//                    if (data_characteristic == null) {
-//                        Log.d(TAG_LOG, "cant find data source chara");
-//                    } else {
-//                        Log.d(TAG_LOG, "find data source chara :: " + data_characteristic.getUuid());
-//                        Log.d(TAG_LOG, "set notify:: " + data_characteristic.getUuid());
-//                        bluetooth_gatt.setCharacteristicNotification(data_characteristic, true);
-//                        BluetoothGattDescriptor descriptor = data_characteristic.getDescriptor(
-//                                UUID.fromString(descriptor_config));
-//                        if(descriptor == null){
-//                            Log.d(TAG_LOG, " ** cant find desc :: " + descriptor.getUuid());
-//                        }else{
-//                            Log.d(TAG_LOG, " ** find desc :: " + descriptor.getUuid());
-//                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-//                            bluetooth_gatt.writeDescriptor(descriptor);
-//                            if(api_level >= 21) {
-//                                stop_le_scanner();
-//                            }else {
-//                                bluetooth_adapter.stopLeScan(le_scan_callback);
-//                            }
-//                        }
-//                    }
-//                }
             }else {
                 try {
                     Log.d(TAG_LOG, "-=-=-=-=- set request -=-=-==-=-=-=");
@@ -408,25 +317,6 @@ public class MusicControlActivity extends Activity {
                             }
                         }
                     }
-
-                    // onCharaWrite -> if entity-update -> chara.write(commnad);
-                    //Command trackCommand = new Command(ServicesConstants.UUID_AMS, ServicesConstants.CHARACTERISTIC_ENTITY_UPDATE, new byte[] {
-                    //        ServicesConstants.EntityIDTrack,
-                    //        ServicesConstants.TrackAttributeIDTitle,
-                    //        ServicesConstants.TrackAttributeIDArtist
-                    //});
-
-
-                    //pendingCommands.add(trackCommand);
-
-//                Command playerCommand = new Command(ServicesConstants.UUID_AMS, ServicesConstants.CHARACTERISTIC_ENTITY_UPDATE, new byte[] {
-//                        ServicesConstants.EntityIDPlayer,
-//                        ServicesConstants.PlayerAttributeIDPlaybackInfo
-//                });
-//
-//                pendingCommands.add(playerCommand);
-//
-//                sendNextCommand();
                 }
                 catch (Exception e) {
                     e.printStackTrace();
@@ -439,7 +329,6 @@ public class MusicControlActivity extends Activity {
             is_set_entity = true;
             bluetooth_gatt.discoverServices();
             Log.d(TAG_LOG, "request media info");
-
         }
 
 
@@ -456,25 +345,8 @@ public class MusicControlActivity extends Activity {
                     BluetoothGattCharacteristic chara = service.getCharacteristic(UUID.fromString(characteristics_entity_update));
                     if(chara != null) {
                         chara.setValue(new byte[]{(byte) 0x02, (byte) 0x00, (byte) 0x02});
-//                            bluetooth_gatt.readCharacteristic(chara);
                         bluetooth_gatt.writeCharacteristic(chara);
                     }
-
-
-                    // onCharaWrite -> if entity-update -> chara.write(commnad);
-                    //Command trackCommand = new Command(ServicesConstants.UUID_AMS, ServicesConstants.CHARACTERISTIC_ENTITY_UPDATE, new byte[] {
-                    //        ServicesConstants.EntityIDTrack,
-                    //        ServicesConstants.TrackAttributeIDTitle,
-                    //        ServicesConstants.TrackAttributeIDArtist
-                    //});
-
-
-                    //pendingCommands.add(trackCommand);
-
-//                Command playerCommand = new Command(ServicesConstants.UUID_AMS, ServicesConstants.CHARACTERISTIC_ENTITY_UPDATE, new byte[] {
-//                        ServicesConstants.EntityIDPlayer,
-//                        ServicesConstants.PlayerAttributeIDPlaybackInfo
-//                });
                 }
             }
         }
@@ -493,67 +365,29 @@ public class MusicControlActivity extends Activity {
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
             Log.d(TAG_LOG, "onCharacteristicChanged:: " + characteristic.getUuid().toString());
-            //notify from data source characteristic
-            //process get notitification packet from iphone.
-            if (characteristics_data_source.toString().equals(characteristic.getUuid().toString())) {
-                byte[] get_data = characteristic.getValue();
-//                if(DEBUG){
-//                StringBuilder stringBuilder = new StringBuilder();
-//                for (byte byteChar : get_data) {
-//                    stringBuilder.append(String.format("%02X", byteChar));
-//                }
-//
-//                Log.d(TAG_LOG, "notify value:: " + stringBuilder.toString());
-//                }
 
-            }
             if (characteristics_entity_update.toString().equals(characteristic.getUuid().toString())) {
-                Log.d(TAG_LOG, "update ");
+                Log.d(TAG_LOG, "entity update ");
+
                 byte[] get_data = characteristic.getValue();
-                StringBuilder stringBuilder = new StringBuilder();
-                for (byte byteChar : get_data) {
-                    stringBuilder.append(String.format("%02X", byteChar));
-                }
-
-                Log.d(TAG_LOG, "notify value:: " + stringBuilder.toString());
-
                 String str = characteristic.getStringValue(3);
-                Log.d(TAG_LOG, "new music: " + str);
+                Log.d(TAG_LOG, "new music info: " + str);
 
                 if(get_data[1] == (byte)0x00) {
-                    Log.d(TAG_LOG, "artist");
+                    Log.d(TAG_LOG, "get artist info");
 
-//                    TextView textView = (TextView) findViewById(R.id.text_artist);
-//                    textView.setText(str);
                     Intent _intent_positive = new Intent();
-                    _intent_positive.setAction(action_positive);
-                    _intent_positive.putExtra(extra_uid, str);
+                    _intent_positive.setAction(set_artist_info);
+                    _intent_positive.putExtra(extra_data, str);
                     sendBroadcast(_intent_positive);
                 }else if(get_data[1] == (byte)0x02) {
-                    Log.d(TAG_LOG, "title");
+                    Log.d(TAG_LOG, "get title info");
+
                     Intent _intent_positive = new Intent();
-                    _intent_positive.setAction(action_negative);
-                    _intent_positive.putExtra(extra_uid, str);
+                    _intent_positive.setAction(set_title_info);
+                    _intent_positive.putExtra(extra_data, str);
                     sendBroadcast(_intent_positive);
-//                    TextView textView = (TextView) findViewById(R.id.text_title);
-//                    textView.setText(str);
                 }
-
-//                PendingIntent _positive_action = PendingIntent.getBroadcast(getApplicationContext(), notification_id, _intent_positive, PendingIntent.FLAG_ONE_SHOT);
-
-
-            }
-            if (characteristics_entity_attribute.toString().equals(characteristic.getUuid().toString())) {
-                Log.d(TAG_LOG, "att ");
-                byte[] get_data = characteristic.getValue();
-//                if(DEBUG){
-                StringBuilder stringBuilder = new StringBuilder();
-                for (byte byteChar : get_data) {
-                    stringBuilder.append(String.format("%02X", byteChar));
-                }
-
-                Log.d(TAG_LOG, "notify value:: " + stringBuilder.toString());
-
             }
         }
     };
@@ -569,20 +403,19 @@ public class MusicControlActivity extends Activity {
 
             // perform notification action: immediately
             // delete intent: after 7~8sec.
-            if (action.equals(action_positive)) {
+            if (action.equals(set_artist_info)) {
                 Log.d(TAG_LOG, "get action: " + action);
 
-                String str = intent.getStringExtra(extra_uid);
-                Log.d(TAG_LOG, "get artist: " + str);
+                String str = intent.getStringExtra(extra_data);
+                Log.d(TAG_LOG, "get artist info: " + str);
 
                 TextView textView = (TextView) findViewById(R.id.text_artist);
                 textView.setText(str);
-            }
-            else if (action.equals(action_negative)) {
+            }else if (action.equals(set_title_info)) {
                 Log.d(TAG_LOG, "get action: " + action);
 
-                String str = intent.getStringExtra(extra_uid);
-                Log.d(TAG_LOG, "get title: " + str);
+                String str = intent.getStringExtra(extra_data);
+                Log.d(TAG_LOG, "get title info: " + str);
 
                 TextView textView = (TextView) findViewById(R.id.text_title);
                 textView.setText(str);
